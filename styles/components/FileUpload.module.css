@@ -1,0 +1,10 @@
+/* styles/components/FileUpload.module.css */
+.rounded {
+    border-radius: 10px;
+  }
+  
+  .fileUpload {
+    padding: 10px;
+    background-color: #f6f6f6;
+    margin: 5px;
+  }

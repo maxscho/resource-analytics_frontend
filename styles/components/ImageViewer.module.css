@@ -1,0 +1,15 @@
+/* styles/components/ImageViewer.module.css */
+.rounded {
+    border-radius: 10px;
+  }
+  
+  .imageViewer {
+    flex-grow: 1;
+    background-color: #f9f9f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 5px;
+    cursor: zoom-in;
+    overflow: auto;
+  }

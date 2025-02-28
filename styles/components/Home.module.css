@@ -1,0 +1,15 @@
+/* styles/Home.module.css */
+.container {
+    display: flex;
+    height: 90vh;
+  }
+  
+  .leftPanel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  
+  .rounded {
+    border-radius: 10px;
+  }

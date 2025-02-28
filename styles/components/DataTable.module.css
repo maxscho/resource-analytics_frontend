@@ -1,0 +1,10 @@
+/* styles/components/DataTable.module.css */
+.rounded {
+    border-radius: 10px;
+  }
+  
+  .dataTable {
+    padding: 10px;
+    background-color: #f6f6f6;
+    margin: 5px;
+  }

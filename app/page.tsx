@@ -1,101 +1,142 @@
-import Image from "next/image";
+// app/(main)/page.tsx
+"use client"; // Mark this as a Client Component
+
+import { useState, useEffect } from "react";
+import FileUpload from "../components/FileUpload";
+import ImageViewer from "../components/ImageViewer";
+import DataTable from "../components/DataTable";
+import AnalysisDropdown from "../components/AnalysisDropdown";
+import Loader from "../components/Loader";
+import styles from "../styles/components/Home.module.css";
+import Head from "next/head";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [imageSrc, setImageSrc] = useState<string>("");
+  const [tableData, setTableData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src =
+      "https://unpkg.com/tabulator-tables@5.5.4/dist/js/tabulator.min.js";
+    script.async = true;
+    script.onload = () => {
+      console.log("Tabulator script loaded");
+    };
+    document.body.appendChild(script);
+
+    const plotlyScript = document.createElement("script");
+    plotlyScript.src = "https://cdn.plot.ly/plotly-2.27.0.min.js";
+    plotlyScript.async = true;
+    plotlyScript.onload = () => {
+      console.log("Plotly script loaded");
+    };
+    document.body.appendChild(plotlyScript);
+
+    return () => {
+      document.body.removeChild(script);
+      document.body.removeChild(plotlyScript);
+    };
+  }, []);
+
+  const handleUpload = async (file: File) => {
+    setIsLoading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("http://localhost:9090/upload", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      const data = await response.json();
+      setImageSrc(`data:image/jpeg;base64,${data.image}`);
+      setTableData(data.table);
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAnalysisChange = async (analysis: string) => {
+    if (analysis) {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`http://localhost:9090/${analysis}`, {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+
+        let content = "";
+        if (data.image) {
+          content += `<img src="data:image/jpeg;base64,${data.image}" style="max-width:100%; height:auto;">`;
+        }
+        if (data.text) {
+          content += `<p>${data.text}</p>`;
+        }
+        if (data.table) {
+          content += `<div id="resultTable"></div>`;
+        }
+        if (data.plot) {
+          content += `<div id="plot"></div>`;
+        }
+        if (data.big_plot) {
+          content += `<div id="big_plot"></div>`;
+        }
+
+        const resultContainer = document.getElementById("resultContainer");
+        if (resultContainer) {
+          resultContainer.innerHTML = content;
+        }
+
+        if (data.table && window.Tabulator) {
+          new window.Tabulator("#resultTable", {
+            data: data.table,
+            autoColumns: true,
+            layout: "fitColumns",
+          });
+        }
+        if (data.plot && window.Plotly) {
+          const figure = JSON.parse(data.plot);
+          window.Plotly.newPlot("plot", figure.data, figure.layout);
+        }
+        if (data.big_plot && window.Plotly) {
+          const bigFigure = JSON.parse(data.big_plot);
+          window.Plotly.newPlot("big_plot", bigFigure.data, bigFigure.layout);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  return (
+    <>
+      <Head>
+        <title>Resource Load Analytics</title>
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/tabulator-tables@5.5.4/dist/css/tabulator.min.css"
+        />
+      </Head>
+
+      <div className={styles.leftPanel}>
+        <FileUpload onUpload={handleUpload} />
+        <ImageViewer imageSrc={imageSrc} />
+        <DataTable data={tableData} />
+      </div>
+      <div id="div4" className={styles.rounded}>
+        <AnalysisDropdown onAnalysisChange={handleAnalysisChange} />
+        <div id="resultContainer">
+          {/* Results will be dynamically inserted here */}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+      {isLoading && <Loader />}
+    </>
   );
 }

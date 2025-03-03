@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import styles from '../styles/components/ImageViewer.module.css';
+import Image from 'next/image';
 
 interface ImageViewerProps {
   imageSrc: string;
@@ -38,7 +39,7 @@ export default function ImageViewer({ imageSrc }: ImageViewerProps) {
 
   return (
     <div id="div2" className={`${styles.rounded} ${styles.imageViewer}`}>
-      {imageSrc && <img id="base64Image" src={imageSrc} style={{ maxWidth: '100%', height: '100%', transition: 'transform 0.2s ease' }} />}
+      {imageSrc && <Image id="base64Image" src={imageSrc} style={{ maxWidth: '100%', height: '100%', transition: 'transform 0.2s ease' }} alt='Placeholder' />}
     </div>
   );
 }

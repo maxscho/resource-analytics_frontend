@@ -12,7 +12,7 @@ import Head from "next/head";
 
 export default function Home() {
   const [imageSrc, setImageSrc] = useState<string>("");
-  const [tableData, setTableData] = useState<any[]>([]);
+  const [tableData, setTableData] = useState<TableData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {

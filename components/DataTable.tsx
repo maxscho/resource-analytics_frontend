@@ -6,11 +6,13 @@ import styles from '../styles/components/DataTable.module.css';
 
 declare global {
   interface Window {
+    /* eslint-disable  @typescript-eslint/no-explicit-any */
     Tabulator: any;
   }
 }
 
 interface DataTableProps {
+  /* eslint-disable  @typescript-eslint/no-explicit-any */
   data: any[];
 }
 

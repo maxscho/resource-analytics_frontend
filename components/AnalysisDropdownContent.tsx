@@ -26,6 +26,8 @@ const AnalysisDropdownContent = ({
   const [initialHeaders, setInitialHeaders] = useState<string[]>([]);
   const [selectedHeaders, setSelectedHeaders] = useState<string[]>([]);
   const [showColumnSelector, setShowColumnSelector] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(10); // Default number of rows per page
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,6 +75,28 @@ const AnalysisDropdownContent = ({
     );
   };
 
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleRowsPerPageChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const newRowsPerPage = parseInt(event.target.value, 10);
+    setRowsPerPage(newRowsPerPage);
+    setCurrentPage(1); // Reset to first page when rows per page changes
+  };
+
+  const totalPages = data?.table
+    ? Math.ceil(data.table.length / rowsPerPage)
+    : 1;
+  const currentTableData = data?.table
+    ? data.table.slice(
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+      )
+    : [];
+
   return (
     <div>
       {data?.image && (
@@ -84,16 +108,33 @@ const AnalysisDropdownContent = ({
       {data?.text && <p>{data.text}</p>}
       {data?.table && (
         <div>
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <p style={{ marginRight: "10px" }}>Visible columns</p>
-              <button onClick={() => setShowColumnSelector((prevShowColumnSelector) => !prevShowColumnSelector)}>
-                {showColumnSelector ? (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <p style={{ marginRight: "10px" }}>Visible columns</p>
+            <button
+              onClick={() =>
+                setShowColumnSelector(
+                  (prevShowColumnSelector) => !prevShowColumnSelector
+                )
+              }
+            >
+              {showColumnSelector ? (
                 <i className="bi bi-arrow-up-square"></i>
-                ) : (
+              ) : (
                 <i className="bi bi-arrow-down-square"></i>
-                )}
-              </button>
-            </div>
+              )}
+            </button>
+            <label htmlFor="rowsPerPage" style={{ marginRight: "10px" }}>
+              Rows per page:
+            </label>
+            <input
+              type="number"
+              id="rowsPerPage"
+              value={rowsPerPage}
+              onChange={handleRowsPerPageChange}
+              style={{ width: "60px" }}
+              min="1"
+            />
+          </div>
           {showColumnSelector && (
             <div>
               {initialHeaders.map((key) => (
@@ -136,7 +177,7 @@ const AnalysisDropdownContent = ({
               </tr>
             </thead>
             <tbody>
-              {data.table.map((row, rowIndex) => (
+              {currentTableData.map((row, rowIndex) => (
                 <tr key={rowIndex}>
                   {initialHeaders
                     .filter((key) => selectedHeaders.includes(key))
@@ -152,6 +193,32 @@ const AnalysisDropdownContent = ({
               ))}
             </tbody>
           </table>
+          { totalPages > 1 && <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginTop: "10px",
+              alignItems: "center",
+            }}
+          >
+            <button
+              className="btn btn-secondary"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <i className="bi bi-chevron-left"></i> Previous
+            </button>
+            <span style={{ margin: "0 10px" }}>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              className="btn btn-secondary"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next <i className="bi bi-chevron-right"></i>
+            </button>
+          </div> }
         </div>
       )}
       {data?.plot && <div id="plot"></div>}

@@ -28,6 +28,7 @@ const AnalysisDropdownContent = ({
   const [showColumnSelector, setShowColumnSelector] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10); // Default number of rows per page
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -87,11 +88,26 @@ const AnalysisDropdownContent = ({
     setCurrentPage(1); // Reset to first page when rows per page changes
   };
 
-  const totalPages = data?.table
-    ? Math.ceil(data.table.length / rowsPerPage)
+  const handleSearchQueryChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSearchQuery(event.target.value);
+    setCurrentPage(1); // Reset to first page when search query changes
+  };
+
+  const filteredTableData = data?.table
+    ? data.table.filter((row) =>
+        initialHeaders.some((key) =>
+          row[key].toString().toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      )
+    : [];
+
+  const totalPages = filteredTableData
+    ? Math.ceil(filteredTableData.length / rowsPerPage)
     : 1;
-  const currentTableData = data?.table
-    ? data.table.slice(
+  const currentTableData = filteredTableData
+    ? filteredTableData.slice(
         (currentPage - 1) * rowsPerPage,
         currentPage * rowsPerPage
       )
@@ -151,6 +167,18 @@ const AnalysisDropdownContent = ({
               ))}
             </div>
           )}
+          <div style={{ marginTop: "10px" }}>
+            <label htmlFor="searchQuery" style={{ marginRight: "10px" }}>
+              Search:
+            </label>
+            <input
+              type="text"
+              id="searchQuery"
+              value={searchQuery}
+              onChange={handleSearchQueryChange}
+              style={{ width: "200px" }}
+            />
+          </div>
           <table
             style={{
               width: "100%",
@@ -193,32 +221,34 @@ const AnalysisDropdownContent = ({
               ))}
             </tbody>
           </table>
-          { totalPages > 1 && <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginTop: "10px",
-              alignItems: "center",
-            }}
-          >
-            <button
-              className="btn btn-secondary"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
+          {totalPages > 1 && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginTop: "10px",
+                alignItems: "center",
+              }}
             >
-              <i className="bi bi-chevron-left"></i> Previous
-            </button>
-            <span style={{ margin: "0 10px" }}>
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              className="btn btn-secondary"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              Next <i className="bi bi-chevron-right"></i>
-            </button>
-          </div> }
+              <button
+                className="btn btn-secondary"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <i className="bi bi-chevron-left"></i> Previous
+              </button>
+              <span style={{ margin: "0 10px" }}>
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                className="btn btn-secondary"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next <i className="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          )}
         </div>
       )}
       {data?.plot && <div id="plot"></div>}

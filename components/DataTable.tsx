@@ -1,31 +1,43 @@
-// components/DataTable.tsx
-'use client'; // Mark this as a Client Component
+"use client"; // Mark this as a Client Component
 
-import { useEffect } from 'react';
-import styles from '../styles/components/DataTable.module.css';
-
-declare global {
-  interface Window {
-    /* eslint-disable  @typescript-eslint/no-explicit-any */
-    Tabulator: any;
-  }
-}
+import styles from "../styles/components/DataTable.module.css";
 
 interface DataTableProps {
-  /* eslint-disable  @typescript-eslint/no-explicit-any */
-  data: any[];
+  data: { [key: string]: any }[];
 }
 
 export default function DataTable({ data }: DataTableProps) {
-  useEffect(() => {
-    if (data && window.Tabulator) {
-      new window.Tabulator("#dataTable", { data, autoColumns: true, layout: "fitColumns" });
-    }
-  }, [data]);
+  if (!data || data.length === 0) {
+    return <div>No data available</div>;
+  }
+
+  const headers = Object.keys(data[0]);
 
   return (
-    <div id="div3" className={`${styles.rounded} ${styles.dataTable}`}>
-      <div id="dataTable"></div>
+    <div className={`${styles.rounded} ${styles.dataTable}`}>
+      <table>
+        <thead>
+          <tr>
+            {headers.map((header) => (
+              <th key={header}>{header}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, rowIndex) => (
+            <tr
+              key={rowIndex}
+              style={{
+                backgroundColor: rowIndex % 2 === 0 ? "white" : "lightgrey",
+              }}
+            >
+              {headers.map((header) => (
+                <td key={header}>{row[header]}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

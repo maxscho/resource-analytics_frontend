@@ -1,4 +1,3 @@
-// components/Header.tsx
 import styles from '../styles/components/Header.module.css';
 
 export default function Header() {

@@ -1,4 +1,4 @@
-"use client"; // Mark this as a Client Component
+"use client";
 
 import styles from "../styles/components/DataTable.module.css";
 
@@ -17,7 +17,7 @@ export default function DataTable({ data }: DataTableProps) {
     <div className={`${styles.rounded} ${styles.dataTable}`}>
       <table>
         <thead>
-          <tr>
+          <tr style={{ backgroundColor: "darkgrey" }}>
             {headers.map((header) => (
               <th key={header}>{header}</th>
             ))}

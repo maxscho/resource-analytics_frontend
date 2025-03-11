@@ -15,7 +15,7 @@ export default function Home() {
   const [imageSrc, setImageSrc] = useState<string>("");
   const [tableData, setTableData] = useState<TableData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [selectedAnalysis, setSelectedAnalysis] = useState<string>('');
+  const [selectedAnalysis, setSelectedAnalysis] = useState<string>("");
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -62,9 +62,6 @@ export default function Home() {
     }
   };
 
-  const handleAnalysisChange = async (analysis: string) => {
-  };
-
   return (
     <>
       <Head>
@@ -75,25 +72,25 @@ export default function Home() {
         />
       </Head>
 
-      <div className={styles.leftPanel}>
-        <FileUpload onUpload={handleUpload} />
-        <ImageViewer imageSrc={imageSrc} />
-        <DataTable data={tableData} />
-      </div>
-      <div id="div4" className={styles.rounded}>
-        <AnalysisDropdown 
-          selectedAnalysis={selectedAnalysis}
-          setSelectedAnalysis={setSelectedAnalysis} 
-        />
-        <AnalysisDropdownContent 
-          selectedAnalysis={selectedAnalysis} 
-          isLoading={isLoading} 
-          setIsLoading={setIsLoading} 
-        />
-        <div id="resultContainer">
-          {/* Results will be dynamically inserted here */}
+      <div className={styles.container}>
+        <div className={styles.leftPanel}>
+          <FileUpload onUpload={handleUpload} />
+          <ImageViewer imageSrc={imageSrc} />
+          <DataTable data={tableData} />
+        </div>
+        <div className={`${styles.rounded} ${styles.rightPanel}`}>
+          <AnalysisDropdown
+            selectedAnalysis={selectedAnalysis}
+            setSelectedAnalysis={setSelectedAnalysis}
+          />
+          <AnalysisDropdownContent
+            selectedAnalysis={selectedAnalysis}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+          />
         </div>
       </div>
+
       {isLoading && <Loader />}
     </>
   );

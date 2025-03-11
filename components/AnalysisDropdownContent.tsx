@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { fetchAnalysisData } from "@/app/api/fetch/fetchDataAnalysis";
+import styles from "@/styles/components/AnalysisDropdownContent.module.css";
 
 interface AnalysisData {
   image?: string;
@@ -32,7 +33,10 @@ const AnalysisDropdownContent = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!selectedAnalysis) return;
+      if (!selectedAnalysis) {
+        setData(null);
+        return;
+      }
       setIsLoading(true);
 
       try {
@@ -74,6 +78,16 @@ const AnalysisDropdownContent = ({
         ? [...prevSelectedHeaders, value]
         : prevSelectedHeaders.filter((header) => header !== value)
     );
+  };
+
+  const handleSelectAllChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { checked } = event.target;
+    if (selectedHeaders.length === initialHeaders.length){
+      return;
+    }
+    setSelectedHeaders(checked ? initialHeaders : []);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -123,36 +137,68 @@ const AnalysisDropdownContent = ({
       )}
       {data?.text && <p>{data.text}</p>}
       {data?.table && (
-        <div>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <p style={{ marginRight: "10px" }}>Visible columns</p>
-            <button
-              onClick={() =>
-                setShowColumnSelector(
-                  (prevShowColumnSelector) => !prevShowColumnSelector
-                )
-              }
-            >
-              {showColumnSelector ? (
-                <i className="bi bi-arrow-up-square"></i>
-              ) : (
-                <i className="bi bi-arrow-down-square"></i>
-              )}
-            </button>
-            <label htmlFor="rowsPerPage" style={{ marginRight: "10px" }}>
-              Rows per page:
-            </label>
-            <input
-              type="number"
-              id="rowsPerPage"
-              value={rowsPerPage}
-              onChange={handleRowsPerPageChange}
-              style={{ width: "60px" }}
-              min="1"
-            />
+        <div className={styles.tableContent}>
+          <div className={styles.tableControlsPanel}>
+            <div className={styles.columnSelectorBar}>
+              <button
+                id="selectionButton"
+                style={{ height: "38px" }}
+                className={`btn btn-secondary d-flex align-items-center ${styles.iconButton}`}
+                onClick={() =>
+                  setShowColumnSelector(
+                    (prevShowColumnSelector) => !prevShowColumnSelector
+                  )
+                }
+              >
+                <span>Visible Columns</span>
+                {showColumnSelector ? (
+                  <i className="bi bi-chevron-up ms-2 fs-6"></i>
+                ) : (
+                  <i className="bi bi-chevron-down ms-2 fs-6"></i>
+                )}
+              </button>
+            </div>
+            <div className={styles.paginationBar}>
+              <label htmlFor="rowsPerPage" style={{ marginRight: "10px" }}>
+                Rows per page:
+              </label>
+              <input
+                type="number"
+                id="rowsPerPage"
+                className="form-control"
+                value={rowsPerPage}
+                onChange={handleRowsPerPageChange}
+                style={{ width: "50px" }}
+                min="1"
+              />
+            </div>
+            <div className={styles.searchBar}>
+              <input
+                type="text"
+                id="searchQuery"
+                className="form-control search-input"
+                placeholder="Search Table..."
+                value={searchQuery}
+                onChange={handleSearchQueryChange}
+              />
+            </div>
           </div>
           {showColumnSelector && (
-            <div>
+            <div
+              className={`custom-control custom-checkbox ${styles.columnSelectorDropdown}`}
+            >
+              <div>
+                <input
+                  type="checkbox"
+                  id="selectAll"
+                  checked={selectedHeaders.length === initialHeaders.length}
+                  onChange={handleSelectAllChange}
+                  className={`custom-control-input ${styles.columnSelectorCheckbox}`}
+                />
+                <label style={{ paddingLeft: "5px" }} htmlFor="selectAll">
+                  <b>View all Columns</b>
+                </label>
+              </div>
               {initialHeaders.map((key) => (
                 <div key={key}>
                   <input
@@ -161,24 +207,15 @@ const AnalysisDropdownContent = ({
                     value={key}
                     checked={selectedHeaders.includes(key)}
                     onChange={handleHeaderChange}
+                    className={`custom-control-input ${styles.columnSelectorCheckbox}`}
                   />
-                  <label htmlFor={key}>{key}</label>
+                  <label style={{ paddingLeft: "5px" }} htmlFor={key}>
+                    {key}
+                  </label>
                 </div>
               ))}
             </div>
           )}
-          <div style={{ marginTop: "10px" }}>
-            <label htmlFor="searchQuery" style={{ marginRight: "10px" }}>
-              Search:
-            </label>
-            <input
-              type="text"
-              id="searchQuery"
-              value={searchQuery}
-              onChange={handleSearchQueryChange}
-              style={{ width: "200px" }}
-            />
-          </div>
           <table
             style={{
               width: "100%",
@@ -231,21 +268,21 @@ const AnalysisDropdownContent = ({
               }}
             >
               <button
-                className="btn btn-secondary"
+                className="btn btn-sm btn-primary"
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
               >
-                <i className="bi bi-chevron-left"></i> Previous
+                <i className="bi bi-chevron-left"></i>
               </button>
               <span style={{ margin: "0 10px" }}>
                 Page {currentPage} of {totalPages}
               </span>
               <button
-                className="btn btn-secondary"
+                className="btn btn-sm btn-primary"
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
               >
-                Next <i className="bi bi-chevron-right"></i>
+                <i className="bi bi-chevron-right"></i>
               </button>
             </div>
           )}

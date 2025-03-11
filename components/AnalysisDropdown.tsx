@@ -1,4 +1,4 @@
-"use client"; // Mark this as a Client Component
+"use client";
 
 import styles from "../styles/components/AnalysisDropdown.module.css";
 

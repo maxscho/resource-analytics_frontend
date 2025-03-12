@@ -9,11 +9,13 @@ import AnalysisDropdown from "../components/AnalysisDropdown";
 import Loader from "../components/Loader";
 import styles from "../styles/components/Home.module.css";
 import Head from "next/head";
+import AnalysisDropdownContent from "@/components/AnalysisDropdownContent";
 
 export default function Home() {
   const [imageSrc, setImageSrc] = useState<string>("");
   const [tableData, setTableData] = useState<TableData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<string>("");
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -60,61 +62,6 @@ export default function Home() {
     }
   };
 
-  const handleAnalysisChange = async (analysis: string) => {
-    if (analysis) {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`http://localhost:9090/${analysis}`, {
-          method: "GET",
-          credentials: "include",
-        });
-        const data = await response.json();
-
-        let content = "";
-        if (data.image) {
-          content += `<img src="data:image/jpeg;base64,${data.image}" style="max-width:100%; height:auto;">`;
-        }
-        if (data.text) {
-          content += `<p>${data.text}</p>`;
-        }
-        if (data.table) {
-          content += `<div id="resultTable"></div>`;
-        }
-        if (data.plot) {
-          content += `<div id="plot"></div>`;
-        }
-        if (data.big_plot) {
-          content += `<div id="big_plot"></div>`;
-        }
-
-        const resultContainer = document.getElementById("resultContainer");
-        if (resultContainer) {
-          resultContainer.innerHTML = content;
-        }
-
-        if (data.table && window.Tabulator) {
-          new window.Tabulator("#resultTable", {
-            data: data.table,
-            autoColumns: true,
-            layout: "fitColumns",
-          });
-        }
-        if (data.plot && window.Plotly) {
-          const figure = JSON.parse(data.plot);
-          window.Plotly.newPlot("plot", figure.data, figure.layout);
-        }
-        if (data.big_plot && window.Plotly) {
-          const bigFigure = JSON.parse(data.big_plot);
-          window.Plotly.newPlot("big_plot", bigFigure.data, bigFigure.layout);
-        }
-      } catch (error) {
-        console.error("Error:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
-
   return (
     <>
       <Head>
@@ -125,17 +72,25 @@ export default function Home() {
         />
       </Head>
 
-      <div className={styles.leftPanel}>
-        <FileUpload onUpload={handleUpload} />
-        <ImageViewer imageSrc={imageSrc} />
-        <DataTable data={tableData} />
-      </div>
-      <div id="div4" className={styles.rounded}>
-        <AnalysisDropdown onAnalysisChange={handleAnalysisChange} />
-        <div id="resultContainer">
-          {/* Results will be dynamically inserted here */}
+      <div className={styles.container}>
+        <div className={styles.leftPanel}>
+          <FileUpload onUpload={handleUpload} />
+          <ImageViewer imageSrc={imageSrc} />
+          <DataTable data={tableData} />
+        </div>
+        <div className={`${styles.rounded} ${styles.rightPanel}`}>
+          <AnalysisDropdown
+            selectedAnalysis={selectedAnalysis}
+            setSelectedAnalysis={setSelectedAnalysis}
+          />
+          <AnalysisDropdownContent
+            selectedAnalysis={selectedAnalysis}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+          />
         </div>
       </div>
+
       {isLoading && <Loader />}
     </>
   );

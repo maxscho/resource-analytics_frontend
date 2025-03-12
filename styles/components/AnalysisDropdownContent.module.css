@@ -1,0 +1,65 @@
+.tableContent {
+  margin-bottom: 20px;
+}
+
+.tableControlsPanel {
+  border-top: 1px solid darkgrey;
+  padding-top: 10px;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.columnSelectorBar {
+  display: flex;
+  align-items: center;
+  gap: 5px; /* Adds spacing between label and button */
+  cursor: pointer; /* Change cursor to pointer to indicate it's clickable */
+}
+
+.tableControlsPanel div {
+  margin-right: 10px;
+}
+
+.iconButton, .iconButton:hover {
+  color: black;
+  background-color: lightgrey;
+  border: 1px solid darkgrey;
+  padding: 0 5px;
+  cursor: pointer;
+  display: inline;
+}
+
+.iconButton i {
+  font-size: 2em;
+  color: inherit;
+}
+
+.searchBar {
+  width: 300px;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.paginationBar {
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.columnSelectorDropdown{
+  background-color: lightgrey;
+  border: 1px solid darkgrey;
+  border-radius: 5px;
+  display: inline-block;
+  min-width: max-content;
+  margin-top: 5px;
+  padding: 5px 10px;
+}
+
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}

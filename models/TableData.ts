@@ -1,7 +1,7 @@
 interface TableData {
     caseId: number;
-    startTimestamp: string;  // ISO 8601 date string format
-    completeTimestamp: string; // ISO 8601 date string format
+    startTimestamp: string;
+    completeTimestamp: string;
     activity: string;
     resource: string;
     role: string;

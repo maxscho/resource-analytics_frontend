@@ -1,8 +1,7 @@
-// components/FileUpload.tsx
-'use client'; // Mark this as a Client Component
+"use client";
 
-import { useState } from 'react';
-import styles from '../styles/components/FileUpload.module.css';
+import { useState } from "react";
+import styles from "../styles/components/FileUpload.module.css";
 
 interface FileUploadProps {
   onUpload: (file: File) => void;
@@ -18,10 +17,30 @@ export default function FileUpload({ onUpload }: FileUploadProps) {
   };
 
   return (
-    <div id="div1" className={`${styles.rounded} ${styles.fileUpload}`}>
+    <div className={`${styles.rounded} ${styles.fileUpload}`}>
       <p>Upload an event log</p>
-      <input type="file" id="fileInput" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-      <button id="fetchButton" onClick={handleUpload}>Upload</button>
+      <div className="d-flex justify-content-between align-items-center w-100">
+        <div className="d-flex align-items-center">
+          <input
+            type="file"
+            id="fileInput"
+            className="d-none"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+          />
+          <label htmlFor="fileInput" className="btn btn-primary">
+            Choose File
+          </label>
+          <span className="ms-2">{file ? file.name : "No file chosen"}</span>
+        </div>
+        <button
+          id="fetchButton"
+          className="btn btn-primary"
+          onClick={handleUpload}
+          disabled={!file}
+        >
+          Upload
+        </button>
+      </div>
     </div>
   );
 }

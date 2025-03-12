@@ -1,15 +1,24 @@
-/* styles/Home.module.css */
 .container {
-    display: flex;
-    height: 90vh;
-  }
-  
-  .leftPanel {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-  }
-  
-  .rounded {
-    border-radius: 10px;
-  }
+  display: grid;
+  grid-template-columns: 40fr 60fr;
+  gap: 10px;
+  height: 90vh;
+  width: 90vw;
+}
+
+.leftPanel {
+  display: flex;
+  flex-direction: column;
+  height: 90vh; 
+}
+
+.rightPanel {
+  margin-top: 5px;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #f6f6f6;
+}
+
+.rounded {
+  border-radius: 10px;
+}

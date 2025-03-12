@@ -1,19 +1,18 @@
-/* styles/components/AnalysisDropdown.module.css */
 .customSelect {
-    background-color: #336699;
-    color: white;
-    padding: 5px;
-    border: none;
-    cursor: pointer;
-    user-select: none;
-    position: relative;
-    border-radius: 5px;
-    width: 110%;
-  }
-  
-  .customSelect:after {
-    content: '\25BC';
-    position: absolute;
-    right: 10px;
-    top: calc(50% - 0.5em);
-  }
+  background-color: #336699;
+  color: white;
+  padding: 5px;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  border-radius: 5px;
+  width: 40%;
+}
+
+.customSelect:after {
+  content: "\25BC";
+  position: absolute;
+  right: 20px;
+  top: calc(50% - 0.5em);
+}

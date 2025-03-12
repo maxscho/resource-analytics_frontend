@@ -38,8 +38,8 @@ export default function ImageViewer({ imageSrc }: ImageViewerProps) {
   }, []);
 
   return (
-    <div id="div2" className={`${styles.rounded} ${styles.imageViewer}`}>
-      {imageSrc && <Image id="base64Image" src={imageSrc} style={{ maxWidth: '100%', height: '100%', transition: 'transform 0.2s ease' }} alt='Placeholder' />}
+    <div id="div2" className={`${styles.rounded} ${styles.imageViewer}`} style={{ position: 'relative' }}>
+      {imageSrc && <Image id="base64Image" src={imageSrc} fill={true} style={{ maxWidth: '100%', height: '100%', transition: 'transform 0.2s ease' }} alt='Placeholder' />}
     </div>
   );
 }

@@ -46,7 +46,7 @@ const options = [
   {
     value: "capacity_utilization_activity",
     label: "Activity Capacity Utilization"
-  },
+  }
 ];
 
 export default function AnalysisDropdown({
@@ -70,6 +70,15 @@ export default function AnalysisDropdown({
           </option>
         ))}
       </select>
+      <button
+        type="button"
+        className={`${styles.iconButton}`}
+        data-bs-toggle="modal"
+        data-bs-target="#infoModal"
+        hidden={!selectedAnalysis}
+      >
+        <i className="bi bi-info-circle"></i>
+      </button>
     </div>
   );
 }

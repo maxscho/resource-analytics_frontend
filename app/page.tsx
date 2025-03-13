@@ -10,6 +10,7 @@ import Loader from "../components/Loader";
 import styles from "../styles/components/Home.module.css";
 import Head from "next/head";
 import AnalysisDropdownContent from "@/components/AnalysisDropdownContent";
+import InfoPanel from "@/components/InfoPanel";
 
 export default function Home() {
   const [imageSrc, setImageSrc] = useState<string>("");
@@ -82,6 +83,9 @@ export default function Home() {
           <AnalysisDropdown
             selectedAnalysis={selectedAnalysis}
             setSelectedAnalysis={setSelectedAnalysis}
+          />
+          <InfoPanel 
+            selectedAnalysis={selectedAnalysis}
           />
           <AnalysisDropdownContent
             selectedAnalysis={selectedAnalysis}

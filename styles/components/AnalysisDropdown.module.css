@@ -16,3 +16,11 @@
   right: 20px;
   top: calc(50% - 0.5em);
 }
+
+.iconButton {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  margin-left: 10px;
+}

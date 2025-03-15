@@ -84,7 +84,7 @@ const AnalysisDropdownContent = ({
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { checked } = event.target;
-    if (selectedHeaders.length === initialHeaders.length){
+    if (selectedHeaders.length === initialHeaders.length) {
       return;
     }
     setSelectedHeaders(checked ? initialHeaders : []);
@@ -176,11 +176,20 @@ const AnalysisDropdownContent = ({
               <input
                 type="text"
                 id="searchQuery"
-                className="form-control search-input"
+                className={`form-control search-input ${styles.searchInput}`}
                 placeholder="Search Table..."
                 value={searchQuery}
                 onChange={handleSearchQueryChange}
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className={styles.clearButton}
+                  onClick={() => setSearchQuery("")}
+                >
+                  &times;
+                </button>
+              )}
             </div>
           </div>
           {showColumnSelector && (

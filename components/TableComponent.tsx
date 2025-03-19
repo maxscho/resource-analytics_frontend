@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styles from "@/styles/components/AnalysisDropdownContent.module.css";
+import TableFilter from "./TableFilter";
 
 interface TableComponentProps {
   initialHeaders: string[];
@@ -16,6 +17,7 @@ interface TableComponentProps {
   currentPage: number;
   totalPages: number;
   currentTableData: any[];
+  showFilterSelector: boolean;
 }
 
 const TableComponent: React.FC<TableComponentProps> = ({
@@ -33,7 +35,13 @@ const TableComponent: React.FC<TableComponentProps> = ({
   currentPage,
   totalPages,
   currentTableData,
+  showFilterSelector,
 }) => {
+  const [numericColumns, setNumericColumns] = useState<string[]>([]);
+  const [filters, setFilters] = useState<{
+    [key: string]: { selectedRadio: string; filterValue: number | string };
+  }>({});
+
   const handleRowsPerPageChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -49,59 +57,84 @@ const TableComponent: React.FC<TableComponentProps> = ({
     handlePageChange(1);
   };
 
+  const isNumeric = (value: any) => {
+    return !isNaN(value - parseFloat(value));
+  };
+
+  useEffect(() => {
+    const numericColumns = initialHeaders.filter((key) =>
+      currentTableData.some((row) => isNumeric(row[key]))
+    );
+    setNumericColumns(numericColumns);
+  }, [initialHeaders, currentTableData]);
+
+  const handleFiltersChange = (updatedFilters: {
+    [key: string]: { selectedRadio: string; filterValue: number | string };
+  }) => {
+    setFilters(updatedFilters);
+  };
+
+  const applyFilters = (data: typeof currentTableData) => {
+    return data.filter((row) => {
+      return Object.entries(filters).every(
+        ([columnName, { selectedRadio, filterValue }]) => {
+          if (!filterValue || !selectedRadio) return true; // Skip if no filter is applied
+          const cellValue = row[columnName as keyof typeof row];
+          if (selectedRadio === ">") return cellValue > Number(filterValue);
+          if (selectedRadio === "<") return cellValue < Number(filterValue);
+          if (selectedRadio === "=") return cellValue === Number(filterValue);
+          return true;
+        }
+      );
+    });
+  };
+
+  const filteredData = applyFilters(currentTableData);
+
   return (
     <div className={styles.tableContent}>
-      <div className={styles.tableControlsPanel}>
-        <div className={styles.columnSelectorBar}>
-          <button
-            id="selectionButton"
-            style={{ height: "38px" }}
-            className={`btn btn-secondary d-flex align-items-center ${styles.iconButton}`}
-            onClick={() => setShowColumnSelector(!showColumnSelector)}
-          >
-            <span>Visible Columns</span>
-            {showColumnSelector ? (
-              <i className="bi bi-chevron-up ms-2 fs-6"></i>
-            ) : (
-              <i className="bi bi-chevron-down ms-2 fs-6"></i>
-            )}
-          </button>
-        </div>
-        <div className={styles.paginationBar}>
-          <label htmlFor="rowsPerPage" style={{ marginRight: "10px" }}>
-            Rows per page:
-          </label>
-          <input
-            type="number"
-            id="rowsPerPage"
-            className="form-control"
-            value={rowsPerPage}
-            onChange={handleRowsPerPageChange}
-            style={{ width: "50px" }}
-            min="1"
-            onFocus={(e) => e.target.select()}
-          />
-        </div>
-        <div className={styles.searchBar}>
-          <input
-            type="text"
-            id="searchQuery"
-            className={`form-control search-input ${styles.searchInput}`}
-            placeholder="Search Table..."
-            value={searchQuery}
-            onChange={handleSearchQueryChange}
-          />
-          {searchQuery && (
+      {showFilterSelector ? (
+        <TableFilter
+          numericColumns={numericColumns}
+          onFiltersChange={handleFiltersChange}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          handlePageChange={handlePageChange}
+        />
+      ) : (
+        <div className={styles.tableControlsPanel}>
+          <div className={styles.columnSelectorBar}>
             <button
-              type="button"
-              className={styles.clearButton}
-              onClick={() => setSearchQuery("")}
+              id="selectionButton"
+              style={{ height: "38px" }}
+              className={`btn btn-secondary d-flex align-items-center ${styles.iconButton}`}
+              onClick={() => setShowColumnSelector(!showColumnSelector)}
             >
-              &times;
+              <span>Visible Columns</span>
+              {showColumnSelector ? (
+                <i className="bi bi-chevron-up ms-2 fs-6"></i>
+              ) : (
+                <i className="bi bi-chevron-down ms-2 fs-6"></i>
+              )}
             </button>
-          )}
+          </div>
+          <div className={styles.paginationBar}>
+            <label htmlFor="rowsPerPage" style={{ marginRight: "10px" }}>
+              Rows per page:
+            </label>
+            <input
+              type="number"
+              id="rowsPerPage"
+              className="form-control"
+              value={rowsPerPage}
+              onChange={handleRowsPerPageChange}
+              style={{ width: "50px" }}
+              min="1"
+              onFocus={(e) => e.target.select()}
+            />
+          </div>
         </div>
-      </div>
+      )}
       {showColumnSelector && (
         <div
           className={`custom-control custom-checkbox ${styles.columnSelectorDropdown}`}
@@ -161,7 +194,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
           </tr>
         </thead>
         <tbody>
-          {currentTableData.map((row, rowIndex) => (
+          {filteredData.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {initialHeaders
                 .filter((key) => selectedHeaders.includes(key))

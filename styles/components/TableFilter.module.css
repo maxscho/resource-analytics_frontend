@@ -1,0 +1,29 @@
+.searchBar {
+  position: relative;
+  width: 400px;
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.searchInput {
+  width: 100%;
+  padding-right: 30px;
+}
+
+.clearButton {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: darkgrey;
+}
+
+.clearButton:hover {
+  color: #000;
+}

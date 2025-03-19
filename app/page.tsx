@@ -17,6 +17,8 @@ export default function Home() {
   const [tableData, setTableData] = useState<TableData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState<string>("");
+  const [showColumnSelector, setShowColumnSelector] = useState<boolean>(false);
+  const [showFilterSelector, setShowFilterSelector] = useState(false);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -79,10 +81,14 @@ export default function Home() {
           <ImageViewer imageSrc={imageSrc} />
           <DataTable data={tableData} />
         </div>
-        <div className={`${styles.rounded} ${styles.rightPanel}`}>
+        <div className={`${ styles.rounded} ${styles.rightPanel}`}>
           <AnalysisDropdown
             selectedAnalysis={selectedAnalysis}
             setSelectedAnalysis={setSelectedAnalysis}
+            showFilterSelector={showFilterSelector}
+            setShowFilterSelector={setShowFilterSelector}
+            showColumnSelector={showColumnSelector}
+            setShowColumnSelector={setShowColumnSelector}
           />
           <InfoPanel 
             selectedAnalysis={selectedAnalysis}
@@ -91,6 +97,10 @@ export default function Home() {
             selectedAnalysis={selectedAnalysis}
             isLoading={isLoading}
             setIsLoading={setIsLoading}
+            showFilterSelector={showFilterSelector}
+            setShowFilterSelector={setShowFilterSelector}
+            showColumnSelector={showColumnSelector}
+            setShowColumnSelector={setShowColumnSelector}
           />
         </div>
       </div>

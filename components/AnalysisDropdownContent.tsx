@@ -17,17 +17,24 @@ interface AnalysisDropdownContentProps {
   selectedAnalysis: string;
   isLoading: boolean;
   setIsLoading: (isLoading: boolean) => void;
+  showFilterSelector: boolean;
+  setShowFilterSelector: (show: boolean) => void;
+  showColumnSelector: boolean;
+  setShowColumnSelector: (show: boolean) => void;
 }
 
 const AnalysisDropdownContent = ({
   selectedAnalysis,
   isLoading,
   setIsLoading,
+  showFilterSelector,
+  setShowFilterSelector,
+  showColumnSelector,
+  setShowColumnSelector
 }: AnalysisDropdownContentProps) => {
   const [data, setData] = useState<AnalysisData | null>(null);
   const [initialHeaders, setInitialHeaders] = useState<string[]>([]);
   const [selectedHeaders, setSelectedHeaders] = useState<string[]>([]);
-  const [showColumnSelector, setShowColumnSelector] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -138,6 +145,7 @@ const AnalysisDropdownContent = ({
           currentPage={currentPage}
           totalPages={totalPages}
           currentTableData={currentTableData}
+          showFilterSelector={showFilterSelector}
         />
       )}
       {data?.plot && <div id="plot"></div>}

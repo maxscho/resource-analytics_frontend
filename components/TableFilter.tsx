@@ -10,6 +10,10 @@ interface TableFilterProps {
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     handlePageChange: (newPage: number) => void;
+    selectedAnalysis: string;
+    showFilterSelector: boolean;
+    setShowFilterSelector: (show: boolean) => void;
+    setShowColumnSelector: (show: boolean) => void;
   }
 
 const TableFilter = ({ 
@@ -18,6 +22,10 @@ const TableFilter = ({
     searchQuery,
     setSearchQuery,
     handlePageChange,
+    selectedAnalysis,
+    showFilterSelector,
+    setShowFilterSelector,
+    setShowColumnSelector
  }: TableFilterProps) => {
 
     const handleSearchQueryChange = (
@@ -70,6 +78,22 @@ const TableFilter = ({
             &times;
           </button>
         )}
+        <button
+            className="btn btn-primary"
+            style={{ marginLeft: "15px", whiteSpace: "nowrap" }}
+            hidden={!selectedAnalysis}
+            onClick={() => {
+              setShowFilterSelector(!showFilterSelector);
+              setShowColumnSelector(false);
+            }}
+          >
+            <span>Show Table Filter</span>
+            {showFilterSelector ? (
+              <i className="bi bi-chevron-up ms-2 fs-6"></i>
+            ) : (
+              <i className="bi bi-chevron-down ms-2 fs-6"></i>
+            )}
+          </button>
       </div>
       {numericColumns.map((column) => (
         <TableFilterElement

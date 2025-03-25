@@ -28,7 +28,7 @@ const TableFilterElement = ({
 
   return (
     <div className={styles.tableFilterElement}>
-      <p >{columnName}</p>
+      <p>{columnName}</p>
       <div
         className="btn-group btn-group-sm ${styles.btnGroup}"
         role="group"

@@ -11,6 +11,7 @@ import styles from "../styles/components/Home.module.css";
 import Head from "next/head";
 import AnalysisDropdownContent from "@/components/AnalysisDropdownContent";
 import InfoPanel from "@/components/InfoPanel";
+import { AnalysisData } from "../models/AnalysisData";
 
 export default function Home() {
   const [imageSrc, setImageSrc] = useState<string>("");
@@ -19,6 +20,9 @@ export default function Home() {
   const [selectedAnalysis, setSelectedAnalysis] = useState<string>("");
   const [showColumnSelector, setShowColumnSelector] = useState<boolean>(false);
   const [showFilterSelector, setShowFilterSelector] = useState(false);
+  const [data, setData] = useState<AnalysisData | null>(null);
+  const [initialHeaders, setInitialHeaders] = useState<string[]>([]);
+  const [selectedHeaders, setSelectedHeaders] = useState<string[]>([]);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -85,22 +89,30 @@ export default function Home() {
           <AnalysisDropdown
             selectedAnalysis={selectedAnalysis}
             setSelectedAnalysis={setSelectedAnalysis}
-            showFilterSelector={showFilterSelector}
-            setShowFilterSelector={setShowFilterSelector}
-            showColumnSelector={showColumnSelector}
-            setShowColumnSelector={setShowColumnSelector}
+            setIsLoading={setIsLoading}
+            data={data}
+            setData={setData}
+            initialHeaders={initialHeaders}
+            setInitialHeaders={setInitialHeaders}
+            selectedHeaders={selectedHeaders}
+            setSelectedHeaders={setSelectedHeaders}
           />
           <InfoPanel 
             selectedAnalysis={selectedAnalysis}
           />
           <AnalysisDropdownContent
             selectedAnalysis={selectedAnalysis}
-            isLoading={isLoading}
             setIsLoading={setIsLoading}
             showFilterSelector={showFilterSelector}
             setShowFilterSelector={setShowFilterSelector}
             showColumnSelector={showColumnSelector}
             setShowColumnSelector={setShowColumnSelector}
+            data={data}
+            setData={setData}
+            initialHeaders={initialHeaders}
+            setInitialHeaders={setInitialHeaders}
+            selectedHeaders={selectedHeaders}
+            setSelectedHeaders={setSelectedHeaders}
           />
         </div>
       </div>

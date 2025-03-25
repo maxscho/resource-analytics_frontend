@@ -4,37 +4,38 @@ import React, { useEffect, useState } from "react";
 import { fetchAnalysisData } from "@/app/api/fetch/fetchDataAnalysis";
 import styles from "@/styles/components/AnalysisDropdownContent.module.css";
 import TableComponent from "./TableComponent";
-
-interface AnalysisData {
-  image?: string;
-  text?: string;
-  table?: any[];
-  plot?: string;
-  big_plot?: string;
-}
+import { init } from "next/dist/compiled/webpack/webpack";
+import { AnalysisData } from "../models/AnalysisData";
 
 interface AnalysisDropdownContentProps {
   selectedAnalysis: string;
-  isLoading: boolean;
   setIsLoading: (isLoading: boolean) => void;
   showFilterSelector: boolean;
   setShowFilterSelector: (show: boolean) => void;
   showColumnSelector: boolean;
   setShowColumnSelector: (show: boolean) => void;
+  initialHeaders: string[];
+  setInitialHeaders: (headers: string[]) => void;
+  selectedHeaders: string[];
+  setSelectedHeaders: React.Dispatch<React.SetStateAction<string[]>>;
+  data: AnalysisData | null;
+  setData: (data: AnalysisData | null) => void;
 }
 
 const AnalysisDropdownContent = ({
   selectedAnalysis,
-  isLoading,
   setIsLoading,
   showFilterSelector,
   setShowFilterSelector,
   showColumnSelector,
-  setShowColumnSelector
+  setShowColumnSelector,
+  initialHeaders,
+  setInitialHeaders,
+  selectedHeaders,
+  setSelectedHeaders,
+  data,
+  setData
 }: AnalysisDropdownContentProps) => {
-  const [data, setData] = useState<AnalysisData | null>(null);
-  const [initialHeaders, setInitialHeaders] = useState<string[]>([]);
-  const [selectedHeaders, setSelectedHeaders] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -81,11 +82,12 @@ const AnalysisDropdownContent = ({
 
   const handleHeaderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = event.target;
-    setSelectedHeaders((prevSelectedHeaders) =>
-      checked
+    setSelectedHeaders((prevSelectedHeaders) => {
+      const updatedHeaders = checked
         ? [...prevSelectedHeaders, value]
-        : prevSelectedHeaders.filter((header) => header !== value)
-    );
+        : prevSelectedHeaders.filter((header) => header !== value);
+      return [...new Set(updatedHeaders)];
+    });
   };
 
   const handleSelectAllChange = (
@@ -146,6 +148,8 @@ const AnalysisDropdownContent = ({
           totalPages={totalPages}
           currentTableData={currentTableData}
           showFilterSelector={showFilterSelector}
+          selectedAnalysis={selectedAnalysis}
+          setShowFilterSelector={setShowFilterSelector}
         />
       )}
       {data?.plot && <div id="plot"></div>}

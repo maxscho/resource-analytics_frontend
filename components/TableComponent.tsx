@@ -18,6 +18,8 @@ interface TableComponentProps {
   totalPages: number;
   currentTableData: any[];
   showFilterSelector: boolean;
+  setShowFilterSelector: (show: boolean) => void;
+  selectedAnalysis: string;
 }
 
 const TableComponent: React.FC<TableComponentProps> = ({
@@ -36,6 +38,8 @@ const TableComponent: React.FC<TableComponentProps> = ({
   totalPages,
   currentTableData,
   showFilterSelector,
+  setShowFilterSelector,
+  selectedAnalysis
 }) => {
   const [numericColumns, setNumericColumns] = useState<string[]>([]);
   const [filters, setFilters] = useState<{
@@ -94,12 +98,17 @@ const TableComponent: React.FC<TableComponentProps> = ({
   return (
     <div className={styles.tableContent}>
       {showFilterSelector ? (
+        // either show the table filter or table controls
         <TableFilter
           numericColumns={numericColumns}
           onFiltersChange={handleFiltersChange}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           handlePageChange={handlePageChange}
+          selectedAnalysis={selectedAnalysis}
+          setShowFilterSelector={setShowFilterSelector}
+          showFilterSelector={showFilterSelector}
+          setShowColumnSelector={setShowColumnSelector}
         />
       ) : (
         <div className={styles.tableControlsPanel}>
@@ -133,9 +142,26 @@ const TableComponent: React.FC<TableComponentProps> = ({
               onFocus={(e) => e.target.select()}
             />
           </div>
+          <button
+            className="btn btn-primary"
+            style={{ marginLeft: "15px" }}
+            hidden={!selectedAnalysis}
+            onClick={() => {
+              setShowFilterSelector(!showFilterSelector);
+              setShowColumnSelector(false);
+            }}
+          >
+            <span>Show Table Filter</span>
+            {showFilterSelector ? (
+              <i className="bi bi-chevron-up ms-2 fs-6"></i>
+            ) : (
+              <i className="bi bi-chevron-down ms-2 fs-6"></i>
+            )}
+          </button>
         </div>
       )}
       {showColumnSelector && (
+        // Selector for visible columns
         <div
           className={`custom-control custom-checkbox ${styles.columnSelectorDropdown}`}
         >
@@ -211,6 +237,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
         </tbody>
       </table>
       {totalPages > 1 && (
+        // Pagination controls
         <div
           style={{
             display: "flex",

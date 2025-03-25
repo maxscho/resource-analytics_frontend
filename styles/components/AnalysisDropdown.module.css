@@ -7,7 +7,7 @@
   user-select: none;
   position: relative;
   border-radius: 5px;
-  width: 40%;
+  width: 80%;
 }
 
 .customSelect:after {
@@ -23,6 +23,24 @@
   padding: 0;
   cursor: pointer;
   margin-left: 10px;
-  padding-right: 10px;
+}
+
+.container {
+  display: flex;
+  gap: 20px;
+}
+
+.analysisSelection {
+  width: 30%;
   border-right: 1px solid darkgrey;
+}
+
+.analysisFilter {
+  width: 70%;
+}
+
+.dropdownElements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }

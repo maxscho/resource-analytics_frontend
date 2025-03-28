@@ -39,7 +39,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
   currentTableData,
   showFilterSelector,
   setShowFilterSelector,
-  selectedAnalysis
+  selectedAnalysis,
 }) => {
   const [numericColumns, setNumericColumns] = useState<string[]>([]);
   const [filters, setFilters] = useState<{
@@ -49,16 +49,27 @@ const TableComponent: React.FC<TableComponentProps> = ({
   const handleRowsPerPageChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const newRowsPerPage = parseInt(event.target.value, 10);
-    setRowsPerPage(newRowsPerPage);
-    handlePageChange(1);
+    const inputValue = event.target.value;
+
+    if (inputValue === "") {
+      setRowsPerPage(0);
+      return;
+    }
+
+    const newRowsPerPage = parseInt(inputValue, 10);
+
+    if (!isNaN(newRowsPerPage) && newRowsPerPage > 0) {
+      setRowsPerPage(newRowsPerPage);
+      handlePageChange(1);
+    }
   };
 
-  const handleSearchQueryChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setSearchQuery(event.target.value);
-    handlePageChange(1);
+  const handleRowsPerPageBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    const inputValue = event.target.value;
+
+    if (inputValue === "" || isNaN(parseInt(inputValue, 10))) {
+      setRowsPerPage(10);
+    }
   };
 
   const isNumeric = (value: any) => {
@@ -135,8 +146,9 @@ const TableComponent: React.FC<TableComponentProps> = ({
               type="number"
               id="rowsPerPage"
               className="form-control"
-              value={rowsPerPage}
+              value={rowsPerPage === 0 ? "" : rowsPerPage}
               onChange={handleRowsPerPageChange}
+              onBlur={handleRowsPerPageBlur}
               style={{ width: "50px" }}
               min="1"
               onFocus={(e) => e.target.select()}

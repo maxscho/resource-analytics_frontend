@@ -15,7 +15,7 @@ import { AnalysisData } from "../models/AnalysisData";
 
 export default function Home() {
   const [imageSrc, setImageSrc] = useState<string>("");
-  const [tableData, setTableData] = useState<TableData[]>([]);
+  const [metaData, setMetaData] = useState<MetaEventData[]>([]); // meta-information of the uploaded event log
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState<string>("");
   const [showColumnSelector, setShowColumnSelector] = useState<boolean>(false);
@@ -23,11 +23,21 @@ export default function Home() {
   const [data, setData] = useState<AnalysisData | null>(null);
   const [initialHeaders, setInitialHeaders] = useState<string[]>([]);
   const [selectedHeaders, setSelectedHeaders] = useState<string[]>([]);
+  const [dropdownOptions, setDropdownOptions] = useState<{
+    metrics: { label: string; value: string }[];
+    resources: { label: string; value: string }[];
+    roles: { label: string; value: string }[];
+    activities: { label: string; value: string }[];
+  }>({
+    metrics: [],
+    resources: [],
+    roles: [],
+    activities: [],
+  });
 
   useEffect(() => {
     const script = document.createElement("script");
-    script.src =
-      "https://unpkg.com/tabulator-tables@5.5.4/dist/js/tabulator.min.js";
+    script.src = "https://unpkg.com/tabulator-tables@5.5.4/dist/js/tabulator.min.js";
     script.async = true;
     script.onload = () => {
       console.log("Tabulator script loaded");
@@ -54,14 +64,34 @@ export default function Home() {
     formData.append("file", file);
 
     try {
+
       const response = await fetch("http://localhost:9090/upload", {
         method: "POST",
         credentials: "include",
         body: formData,
       });
       const data = await response.json();
+      console.log("Upload Response:", data);
       setImageSrc(`data:image/jpeg;base64,${data.image}`);
-      setTableData(data.table);
+      setMetaData(data.table);
+      setDropdownOptions({
+        metrics: ([]).map((item: string) => ({
+          label: item,
+          value: item,
+        })),
+        resources: (data.resource || []).map((item: string) => ({
+          label: item,
+          value: item,
+        })),
+        roles: (data.role || []).map((item: string) => ({
+          label: item,
+          value: item,
+        })),
+        activities: (data.activity || []).map((item: string) => ({
+          label: item,
+          value: item,
+        })),
+      });
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -83,19 +113,16 @@ export default function Home() {
         <div className={styles.leftPanel}>
           <FileUpload onUpload={handleUpload} />
           <ImageViewer imageSrc={imageSrc} />
-          <DataTable data={tableData} />
+          <DataTable data={metaData} />
         </div>
         <div className={`${ styles.rounded} ${styles.rightPanel}`}>
           <AnalysisDropdown
             selectedAnalysis={selectedAnalysis}
             setSelectedAnalysis={setSelectedAnalysis}
-            setIsLoading={setIsLoading}
-            data={data}
             setData={setData}
-            initialHeaders={initialHeaders}
             setInitialHeaders={setInitialHeaders}
-            selectedHeaders={selectedHeaders}
             setSelectedHeaders={setSelectedHeaders}
+            dropdownOptions={dropdownOptions}
           />
           <InfoPanel 
             selectedAnalysis={selectedAnalysis}

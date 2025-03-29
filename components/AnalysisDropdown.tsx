@@ -10,13 +10,15 @@ import { AnalysisData } from "../models/AnalysisData";
 interface AnalysisDropdownProps {
   selectedAnalysis: string;
   setSelectedAnalysis: (analysis: string) => void;
-  setIsLoading: (isLoading: boolean) => void;
-  initialHeaders: string[];
   setInitialHeaders: (headers: string[]) => void;
-  selectedHeaders: string[];
   setSelectedHeaders: (headers: string[]) => void;
-  data: AnalysisData | null;
   setData: (data: AnalysisData | null) => void;
+  dropdownOptions: {
+    metrics: { label: string; value: string }[];
+    resources: { label: string; value: string }[];
+    roles: { label: string; value: string }[];
+    activities: { label: string; value: string }[];
+  };
 }
 
 const options = [
@@ -64,27 +66,12 @@ const options = [
 export default function AnalysisDropdown({
   selectedAnalysis,
   setSelectedAnalysis,
-  setIsLoading,
-  initialHeaders,
   setInitialHeaders,
-  selectedHeaders,
   setSelectedHeaders,
-  data,
   setData,
+  dropdownOptions
 }: AnalysisDropdownProps) {
-  const [dropdownOptions, setDropdownOptions] = useState<{
-    metrics: { label: string; value: string }[];
-    resources: { label: string; value: string }[];
-    roles: { label: string; value: string }[];
-    activities: { label: string; value: string }[];
-  }>({
-    metrics: [],
-    resources: [],
-    roles: [],
-    activities: [],
-  });
 
-  // State to store selected values
   const [selectedValues, setSelectedValues] = useState<{
     metric: string;
     resource: string;
@@ -97,59 +84,17 @@ export default function AnalysisDropdown({
     activity: "",
   });
 
-  useEffect(() => {
-    async function fetchDropdownOptions() {
-      try {
-        const response = await fetch("http://localhost:9090/filterValues", {
-          method: "GET",
-          credentials: "include",
-        });
-        if (!response.ok) {
-          throw new Error("Failed to fetch dropdown options");
-        }
-        const data = await response.json();
-        console.log("Fetched data:", data);
+  const [isInitialRender, setIsInitialRender] = useState(true);
 
-        // Map backend response to dropdownOptions state
-        setDropdownOptions({
-          metrics: (data.Metric || []).map((item: string) => ({
-            label: item,
-            value: item,
-          })),
-          resources: (data.Resource || []).map((item: string) => ({
-            label: item,
-            value: item,
-          })),
-          roles: (data.Role || []).map((item: string) => ({
-            label: item,
-            value: item,
-          })),
-          activities: (data.Activity || []).map((item: string) => ({
-            label: item,
-            value: item,
-          })),
-        });
-      } catch (error) {
-        console.error("Error fetching dropdown options:", error);
-      }
-    }
-    fetchDropdownOptions();
-  }, []);
-
-  // Monitor changes to selected values
   useEffect(() => {
-    console.log("Selected values:", selectedValues);
-  }, [selectedValues]);
 
-  // Effect to handle changes to selectedValues
-  useEffect(() => {
     const sendFilterData = async () => {
       try {
         const response = await fetch("http://localhost:9090/filter_analysis", {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(selectedValues), // Use the latest state
+          body: JSON.stringify(selectedValues),
         });
 
         if (!response.ok) {
@@ -159,7 +104,6 @@ export default function AnalysisDropdown({
         const filteredData = await response.json();
         console.log("Filtered Response:", filteredData);
 
-        // After fetching filtered data, fetch data for the selected analysis
         if (selectedAnalysis) {
           const analysisData = await fetchAnalysisData(selectedAnalysis);
           setData(analysisData);
@@ -175,9 +119,13 @@ export default function AnalysisDropdown({
       }
     };
 
-    // Call sendFilterData whenever selectedValues changes
-    sendFilterData();
-  }, [selectedValues, selectedAnalysis, setData, setInitialHeaders, setSelectedHeaders]);
+    if (!isInitialRender) {
+      // Only call sendFilterData if it's not the initial render otherwise session informatino is not set
+      sendFilterData();
+    } else {
+      setIsInitialRender(false);
+    }
+  }, [selectedValues]);
 
   return (
     <div className={styles.container}>

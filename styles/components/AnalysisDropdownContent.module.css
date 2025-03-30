@@ -13,15 +13,16 @@
 .columnSelectorBar {
   display: flex;
   align-items: center;
-  gap: 5px; /* Adds spacing between label and button */
-  cursor: pointer; /* Change cursor to pointer to indicate it's clickable */
+  gap: 5px; 
+  cursor: pointer;
 }
 
 .tableControlsPanel div {
   margin-right: 10px;
 }
 
-.iconButton, .iconButton:hover {
+.iconButton,
+.iconButton:hover {
   color: black;
   background-color: lightgrey;
   border: 1px solid darkgrey;
@@ -35,20 +36,13 @@
   color: inherit;
 }
 
-.searchBar {
-  width: 300px;
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-}
-
 .paginationBar {
   margin-left: 10px;
   display: flex;
   align-items: center;
 }
 
-.columnSelectorDropdown{
+.columnSelectorDropdown {
   background-color: lightgrey;
   border: 1px solid darkgrey;
   border-radius: 5px;
@@ -58,8 +52,9 @@
   padding: 5px 10px;
 }
 
-input[type=number]::-webkit-inner-spin-button, 
-input[type=number]::-webkit-outer-spin-button { 
-  -webkit-appearance: none; 
-  margin: 0; 
+/*hide the spin buttons in number inputs*/
+.noSpinner::-webkit-inner-spin-button,
+.noSpinner::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }

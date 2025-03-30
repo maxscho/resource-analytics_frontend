@@ -13,3 +13,15 @@ body, html {
   background-color: #336699 !important;
   border-color: #336699 !important;
 }
+
+.btn-check:checked + .btn-outline-primary {
+  background-color: #336699 !important;
+  border-color: #336699 !important;
+  color: white !important;
+}
+
+.btn-outline-primary {
+  border-color: #336699 !important;
+  color: #336699 !important;
+  background-color: white !important; 
+}

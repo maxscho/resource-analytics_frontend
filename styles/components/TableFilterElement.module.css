@@ -1,0 +1,16 @@
+.tableFilterElement {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tableFilterElement p {
+  white-space: break-spaces;
+  width: 400px; 
+  margin: 5px 0;
+  
+}
+
+.tableFilterElement input {
+  width: 100px; 
+}

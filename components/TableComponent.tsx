@@ -16,7 +16,7 @@ interface TableComponentProps {
   handlePageChange: (newPage: number) => void;
   currentPage: number;
   totalPages: number;
-  currentTableData: any[];
+  currentTableData: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   showFilterSelector: boolean;
   setShowFilterSelector: (show: boolean) => void;
   selectedAnalysis: string;
@@ -72,7 +72,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
     }
   };
 
-  const isNumeric = (value: any) => {
+  const isNumeric = (value: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     return !isNaN(value - parseFloat(value));
   };
 
@@ -145,7 +145,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
             <input
               type="number"
               id="rowsPerPage"
-              className="form-control"
+              className={`form-control ${styles.noSpinner}`}
               value={rowsPerPage === 0 ? "" : rowsPerPage}
               onChange={handleRowsPerPageChange}
               onBlur={handleRowsPerPageBlur}

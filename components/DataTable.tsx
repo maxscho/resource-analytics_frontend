@@ -3,7 +3,7 @@
 import styles from "../styles/components/DataTable.module.css";
 
 interface DataTableProps {
-  data: { [key: string]: any }[];
+  data: { [key: string]: any }[]; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export default function DataTable({ data }: DataTableProps) {

@@ -12,10 +12,12 @@ export default function ImageViewer({ imageSrc }: ImageViewerProps) {
   const [scale, setScale] = useState<number>(1);
 
   useEffect(() => {
+if (typeof window !== 'undefined') {
     const img = document.getElementById('base64Image');
     if (img) {
       img.style.transform = `scale(${scale})`;
     }
+}
   }, [scale]);
 
   const handleWheel = (event: WheelEvent) => {
@@ -25,6 +27,7 @@ export default function ImageViewer({ imageSrc }: ImageViewerProps) {
   };
 
   useEffect(() => {
+if (typeof window !== 'undefined') {
     const imgContainer = document.getElementById('div2');
     if (imgContainer) {
       // Add the event listener with { passive: false }
@@ -34,6 +37,7 @@ export default function ImageViewer({ imageSrc }: ImageViewerProps) {
       return () => {
         imgContainer.removeEventListener('wheel', handleWheel);
       };
+}
     }
   }, []);
 

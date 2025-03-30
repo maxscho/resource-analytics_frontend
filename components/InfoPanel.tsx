@@ -1,5 +1,6 @@
+'use client';
+
 import React, { useEffect, useState } from "react";
-import { fetchAnalysisData } from "@/app/api/fetch/fetchDataAnalysis";
 import "../styles/components/InfoPanel.module.css";
 
 interface InfoPanelProps {
@@ -8,6 +9,7 @@ interface InfoPanelProps {
 
 const InfoPanel = ({ selectedAnalysis }: InfoPanelProps) => {
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require("bootstrap/dist/js/bootstrap.bundle.min.js");
   }, []);
 
@@ -17,13 +19,15 @@ const InfoPanel = ({ selectedAnalysis }: InfoPanelProps) => {
 
   useEffect(() => {
     fetch("http://localhost:9090/infoPanel")
-      .then(response => response.json())
-      .then(data => setOptions(data))
-      .catch(error => console.error("Error fetching data:", error));
+      .then((response) => response.json())
+      .then((data) => setOptions(data))
+      .catch((error) => console.error("Error fetching data:", error));
   }, []);
 
   useEffect(() => {
-    const selectedOption = options.find(option => option.value === selectedAnalysis);
+    const selectedOption = options.find(
+      (option) => option.value === selectedAnalysis
+    );
     setInfoContent(selectedOption?.info || "");
     setAnalysisLabel(selectedOption?.label || "");
   }, [selectedAnalysis]);

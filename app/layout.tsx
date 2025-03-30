@@ -2,6 +2,7 @@
 import Header from "../components/Header";
 import styles from "../styles/components/Home.module.css";
 import { ReactNode } from "react";
+import 'bootstrap/dist/css/bootstrap.css';
 import './globals.css';
 
 interface MainLayoutProps {

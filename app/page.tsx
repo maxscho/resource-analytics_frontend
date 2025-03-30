@@ -1,5 +1,4 @@
-// app/(main)/page.tsx
-"use client"; // Mark this as a Client Component
+"use client";
 
 import { useState, useEffect } from "react";
 import FileUpload from "../components/FileUpload";
@@ -36,26 +35,19 @@ export default function Home() {
   });
 
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/tabulator-tables@5.5.4/dist/js/tabulator.min.js";
-    script.async = true;
-    script.onload = () => {
-      console.log("Tabulator script loaded");
-    };
-    document.body.appendChild(script);
+    if (typeof window !== "undefined") {
+      const plotlyScript = document.createElement("script");
+      plotlyScript.src = "https://cdn.plot.ly/plotly-2.27.0.min.js";
+      plotlyScript.async = true;
+      plotlyScript.onload = () => {
+        console.log("Plotly script loaded");
+      };
+      document.body.appendChild(plotlyScript);
 
-    const plotlyScript = document.createElement("script");
-    plotlyScript.src = "https://cdn.plot.ly/plotly-2.27.0.min.js";
-    plotlyScript.async = true;
-    plotlyScript.onload = () => {
-      console.log("Plotly script loaded");
-    };
-    document.body.appendChild(plotlyScript);
-
-    return () => {
-      document.body.removeChild(script);
-      document.body.removeChild(plotlyScript);
-    };
+      return () => {
+        document.body.removeChild(plotlyScript);
+      };
+    }
   }, []);
 
   const handleUpload = async (file: File) => {
@@ -64,7 +56,6 @@ export default function Home() {
     formData.append("file", file);
 
     try {
-
       const response = await fetch("http://localhost:9090/upload", {
         method: "POST",
         credentials: "include",
@@ -75,7 +66,7 @@ export default function Home() {
       setImageSrc(`data:image/jpeg;base64,${data.image}`);
       setMetaData(data.table);
       setDropdownOptions({
-        metrics: ([]).map((item: string) => ({
+        metrics: [].map((item: string) => ({
           label: item,
           value: item,
         })),
@@ -107,6 +98,14 @@ export default function Home() {
           rel="stylesheet"
           href="https://unpkg.com/tabulator-tables@5.5.4/dist/css/tabulator.min.css"
         />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+          defer
+        ></script>
       </Head>
 
       <div className={styles.container}>
@@ -115,7 +114,7 @@ export default function Home() {
           <ImageViewer imageSrc={imageSrc} />
           <DataTable data={metaData} />
         </div>
-        <div className={`${ styles.rounded} ${styles.rightPanel}`}>
+        <div className={`${styles.rounded} ${styles.rightPanel}`}>
           <AnalysisDropdown
             selectedAnalysis={selectedAnalysis}
             setSelectedAnalysis={setSelectedAnalysis}
@@ -124,9 +123,7 @@ export default function Home() {
             setSelectedHeaders={setSelectedHeaders}
             dropdownOptions={dropdownOptions}
           />
-          <InfoPanel 
-            selectedAnalysis={selectedAnalysis}
-          />
+          <InfoPanel selectedAnalysis={selectedAnalysis} />
           <AnalysisDropdownContent
             selectedAnalysis={selectedAnalysis}
             setIsLoading={setIsLoading}

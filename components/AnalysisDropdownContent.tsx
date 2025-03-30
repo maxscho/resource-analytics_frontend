@@ -2,9 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { fetchAnalysisData } from "@/app/api/fetch/fetchDataAnalysis";
-import styles from "@/styles/components/AnalysisDropdownContent.module.css";
 import TableComponent from "./TableComponent";
-import { init } from "next/dist/compiled/webpack/webpack";
 import { AnalysisData } from "../models/AnalysisData";
 
 interface AnalysisDropdownContentProps {
@@ -34,7 +32,7 @@ const AnalysisDropdownContent = ({
   selectedHeaders,
   setSelectedHeaders,
   data,
-  setData
+  setData,
 }: AnalysisDropdownContentProps) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
@@ -67,16 +65,14 @@ const AnalysisDropdownContent = ({
   }, [selectedAnalysis, setIsLoading]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (data?.plot && window.Plotly) {
-        const figure = JSON.parse(data.plot);
-        window.Plotly.newPlot("plot", figure.data, figure.layout);
-      }
+    if (typeof window !== "undefined" && data?.plot && window.Plotly) {
+      const figure = JSON.parse(data.plot);
+      window.Plotly.newPlot("plot", figure.data, figure.layout);
+    }
 
-      if (data?.big_plot && window.Plotly) {
-        const bigFigure = JSON.parse(data.big_plot);
-        window.Plotly.newPlot("big_plot", bigFigure.data, bigFigure.layout);
-      }
+    if (typeof window !== "undefined" && data?.big_plot && window.Plotly) {
+      const bigFigure = JSON.parse(data.big_plot);
+      window.Plotly.newPlot("big_plot", bigFigure.data, bigFigure.layout);
     }
   }, [data]);
 

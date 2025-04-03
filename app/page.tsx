@@ -6,11 +6,12 @@ import ImageViewer from "../components/ImageViewer";
 import DataTable from "../components/DataTable";
 import AnalysisDropdown from "../components/AnalysisDropdown";
 import Loader from "../components/Loader";
-import styles from "../styles/components/Home.module.css";
+import styles from "../styles/components/pages.module.css";
 import Head from "next/head";
 import AnalysisDropdownContent from "@/components/AnalysisDropdownContent";
 import InfoPanel from "@/components/InfoPanel";
 import { AnalysisData } from "../models/AnalysisData";
+import AnalysisPanel from "../components/AnalysisPanel";
 
 export default function Home() {
   const [imageSrc, setImageSrc] = useState<string>("");
@@ -33,6 +34,23 @@ export default function Home() {
     roles: [],
     activities: [],
   });
+  const [showProcessOverview, setShowProcessOverview] = useState(true);
+  const [analysisInstances, setAnalysisInstances] = useState(["Analysis 1"]);
+
+  const addAnalysisInstance = () => {
+    setAnalysisInstances([
+      ...analysisInstances,
+      `Analysis ${analysisInstances.length + 1}`,
+    ]);
+  };
+
+  const removeAnalysisInstance = (index: number) => {
+    setAnalysisInstances(analysisInstances.filter((_, i) => i !== index));
+  };
+
+  const gridTemplate = showProcessOverview
+    ? `470px repeat(${analysisInstances.length}, 1fr)`
+    : `repeat(${analysisInstances.length}, 1fr)`;
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -107,37 +125,55 @@ export default function Home() {
           defer
         ></script>
       </Head>
-
-      <div className={styles.container}>
-        <div className={styles.leftPanel}>
-          <FileUpload onUpload={handleUpload} />
-          <ImageViewer imageSrc={imageSrc} />
-          <DataTable data={metaData} />
+      
+      <div className={styles.placeholder}>
+        <div className={styles.layoutNavigation}>
+          <button
+            onClick={() => setShowProcessOverview(!showProcessOverview)}
+            className={`btn btn-primary btn-sm`}>
+            {showProcessOverview ? "Hide" : "Show"} Process Overview
+          </button>
+          <div className={styles.alignRight}>
+            <button
+              onClick={addAnalysisInstance}
+              className={`btn btn-success btn-sm ${styles.buttonElement}`}
+              >
+                Add Analysis Panel
+            </button>
+            {analysisInstances.length > 1 && (
+              <button
+                onClick={() => removeAnalysisInstance(analysisInstances.length - 1)}
+                className={`btn btn-danger btn-sm `}
+                >
+                Remove Analysis Panel
+              </button>
+            )}
+          </div>
         </div>
-        <div className={`${styles.rounded} ${styles.rightPanel}`}>
-          <AnalysisDropdown
-            selectedAnalysis={selectedAnalysis}
-            setSelectedAnalysis={setSelectedAnalysis}
-            setData={setData}
-            setInitialHeaders={setInitialHeaders}
-            setSelectedHeaders={setSelectedHeaders}
-            dropdownOptions={dropdownOptions}
-          />
-          <InfoPanel selectedAnalysis={selectedAnalysis} />
-          <AnalysisDropdownContent
-            selectedAnalysis={selectedAnalysis}
-            setIsLoading={setIsLoading}
-            showFilterSelector={showFilterSelector}
-            setShowFilterSelector={setShowFilterSelector}
-            showColumnSelector={showColumnSelector}
-            setShowColumnSelector={setShowColumnSelector}
-            data={data}
-            setData={setData}
-            initialHeaders={initialHeaders}
-            setInitialHeaders={setInitialHeaders}
-            selectedHeaders={selectedHeaders}
-            setSelectedHeaders={setSelectedHeaders}
-          />
+
+        <div className={styles.container}>
+          {showProcessOverview && (
+          <div className={styles.leftPanel}>
+            <FileUpload onUpload={handleUpload} />
+            <ImageViewer imageSrc={imageSrc} />
+            <DataTable data={metaData} />
+          </div>)}
+          <div 
+            className={styles.rightPanel}
+            style={{width: showProcessOverview ? "70%" : "100%"}}
+          >
+            {analysisInstances.map((_, index) => (
+                <div
+                key={index}
+                className={styles.rightPanelElement}
+                style={{
+                  maxWidth: analysisInstances.length > 1 ? "850px" : "none",
+                }}
+                >
+                <AnalysisPanel dropdownOptions={dropdownOptions} />
+                </div>
+            ))}
+          </div>
         </div>
       </div>
 

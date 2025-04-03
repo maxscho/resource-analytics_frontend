@@ -1,0 +1,53 @@
+.placeholder {
+}
+
+.layoutNavigation {
+  display: flex;
+  flex-direction: row;
+  background: rgb(198, 198, 198);
+  width: calc(100vw - 10px);
+  margin: 5px 5px;
+  border-radius: 10px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 5px;
+}
+
+.container {
+  height: 85vh;
+  display: flex;
+  flex-direction: row;
+}
+
+.leftPanel {
+  width: 30%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  overflow: hidden;
+}
+
+.rightPanel {
+  width: 70%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: auto;
+  white-space: nowrap;
+}
+
+.rightPanelElement {
+  min-width: 450px;
+  overflow-y: auto;
+  margin-right: 5px;
+}
+
+.alignRight {
+  display: flex;
+}
+
+.buttonElement {
+  margin-right: 10px;
+}

@@ -69,27 +69,26 @@ export default function AnalysisDropdown({
   setInitialHeaders,
   setSelectedHeaders,
   setData,
-  dropdownOptions
+  dropdownOptions,
 }: AnalysisDropdownProps) {
-
   const [selectedValues, setSelectedValues] = useState<{
-    metric: string;
-    resource: string;
-    role: string;
-    activity: string;
+    metric: string[];
+    resource: string[];
+    role: string[];
+    activity: string[];
   }>({
-    metric: "",
-    resource: "",
-    role: "",
-    activity: "",
+    metric: [],
+    resource: [],
+    role: [],
+    activity: [],
   });
 
   const [isInitialRender, setIsInitialRender] = useState(true);
 
   useEffect(() => {
-
     const sendFilterData = async () => {
       try {
+        console.log("Selected Values:", selectedValues);
         const response = await fetch("http://localhost:9090/filter_analysis", {
           method: "POST",
           credentials: "include",
@@ -162,28 +161,40 @@ export default function AnalysisDropdown({
             label="Metric"
             options={dropdownOptions.metrics}
             onChange={(value) => {
-              setSelectedValues((prev) => ({ ...prev, metric: value }));
+              setSelectedValues((prev) => ({
+                ...prev,
+                metric: value,
+              }));
             }}
           />
           <DropdownElement
             label="Resource"
             options={dropdownOptions.resources}
             onChange={(value) => {
-              setSelectedValues((prev) => ({ ...prev, resource: value }));
+              setSelectedValues((prev) => ({
+                ...prev,
+                resource: value,
+              }));
             }}
           />
           <DropdownElement
             label="Role"
             options={dropdownOptions.roles}
             onChange={(value) => {
-              setSelectedValues((prev) => ({ ...prev, role: value }));
+              setSelectedValues((prev) => ({
+                ...prev,
+                role: value,
+              }));
             }}
           />
           <DropdownElement
             label="Activity"
             options={dropdownOptions.activities}
             onChange={(value) => {
-              setSelectedValues((prev) => ({ ...prev, activity: value }));
+              setSelectedValues((prev) => ({
+                ...prev,
+                activity: value,
+              }));
             }}
           />
         </div>

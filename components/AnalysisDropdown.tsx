@@ -8,6 +8,7 @@ import { fetchAnalysisData } from "@/app/api/fetch/fetchDataAnalysis";
 import { AnalysisData } from "../models/AnalysisData";
 
 interface AnalysisDropdownProps {
+  panelId: string;
   selectedAnalysis: string;
   setSelectedAnalysis: (analysis: string) => void;
   setInitialHeaders: (headers: string[]) => void;
@@ -64,6 +65,7 @@ const options = [
 ];
 
 export default function AnalysisDropdown({
+  panelId,
   selectedAnalysis,
   setSelectedAnalysis,
   setInitialHeaders,
@@ -89,11 +91,19 @@ export default function AnalysisDropdown({
     const sendFilterData = async () => {
       try {
         console.log("Selected Values:", selectedValues);
-        const response = await fetch("http://localhost:9090/filter_analysis", {
+        const bodyData = JSON.stringify({
+          panel_id: panelId,
+          metric: selectedValues.metric || [],
+          resource: selectedValues.resource || [],
+          role: selectedValues.role || [],
+          activity: selectedValues.activity || []
+        });
+        console.log("Body:", bodyData);
+        const response = await fetch(`http://localhost:9090/filter_analysis`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(selectedValues),
+          body: bodyData
         });
 
         if (!response.ok) {
@@ -104,7 +114,7 @@ export default function AnalysisDropdown({
         console.log("Filtered Response:", filteredData);
 
         if (selectedAnalysis) {
-          const analysisData = await fetchAnalysisData(selectedAnalysis);
+          const analysisData = await fetchAnalysisData(selectedAnalysis, panelId);
           setData(analysisData);
 
           if (analysisData.table) {

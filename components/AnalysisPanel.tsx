@@ -6,7 +6,8 @@ import styles from "../styles/components/Home.module.css";
 import { AnalysisData } from "../models/AnalysisData";
 
 interface AnalysisPanelProps {
-  dropdownOptions: {
+  panelId: string;
+  initialDropdownOptions: {
     metrics: { label: string; value: string }[];
     resources: { label: string; value: string }[];
     roles: { label: string; value: string }[];
@@ -14,7 +15,11 @@ interface AnalysisPanelProps {
   };
 }
 
-export default function AnalysisPanel({ dropdownOptions }: AnalysisPanelProps) {
+export default function AnalysisPanel({
+  panelId,
+  initialDropdownOptions,
+}: AnalysisPanelProps) {
+  const [dropdownOptions, setDropdownOptions] = useState(initialDropdownOptions);
   const [selectedAnalysis, setSelectedAnalysis] = useState<string>("");
   const [showColumnSelector, setShowColumnSelector] = useState<boolean>(false);
   const [showFilterSelector, setShowFilterSelector] = useState<boolean>(false);
@@ -26,6 +31,7 @@ export default function AnalysisPanel({ dropdownOptions }: AnalysisPanelProps) {
   return (
     <div className={`${styles.rounded} ${styles.rightPanel}`}>
       <AnalysisDropdown
+        panelId={panelId}
         selectedAnalysis={selectedAnalysis}
         setSelectedAnalysis={setSelectedAnalysis}
         setData={setData}
@@ -35,6 +41,7 @@ export default function AnalysisPanel({ dropdownOptions }: AnalysisPanelProps) {
       />
       <InfoPanel selectedAnalysis={selectedAnalysis} />
       <AnalysisDropdownContent
+        panelId={panelId}
         selectedAnalysis={selectedAnalysis}
         setIsLoading={setIsLoading}
         showFilterSelector={showFilterSelector}

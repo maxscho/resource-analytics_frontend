@@ -6,6 +6,7 @@ import TableComponent from "./TableComponent";
 import { AnalysisData } from "../models/AnalysisData";
 
 interface AnalysisDropdownContentProps {
+  panelId: string;
   selectedAnalysis: string;
   setIsLoading: (isLoading: boolean) => void;
   showFilterSelector: boolean;
@@ -21,6 +22,7 @@ interface AnalysisDropdownContentProps {
 }
 
 const AnalysisDropdownContent = ({
+  panelId,
   selectedAnalysis,
   setIsLoading,
   showFilterSelector,
@@ -47,7 +49,7 @@ const AnalysisDropdownContent = ({
       setIsLoading(true);
 
       try {
-        const data = await fetchAnalysisData(selectedAnalysis);
+        const data = await fetchAnalysisData(selectedAnalysis, panelId);
         setData(data);
         if (data.table) {
           const headers = Object.keys(data.table[0] || {});
@@ -67,14 +69,14 @@ const AnalysisDropdownContent = ({
   useEffect(() => {
     if (typeof window !== "undefined" && data?.plot && window.Plotly) {
       const figure = JSON.parse(data.plot);
-      window.Plotly.newPlot("plot", figure.data, figure.layout);
+      window.Plotly.newPlot(`plot-${panelId}`, figure.data, figure.layout);
     }
 
     if (typeof window !== "undefined" && data?.big_plot && window.Plotly) {
       const bigFigure = JSON.parse(data.big_plot);
-      window.Plotly.newPlot("big_plot", bigFigure.data, bigFigure.layout);
+      window.Plotly.newPlot(`big_plot-${panelId}`, bigFigure.data, bigFigure.layout);
     }
-  }, [data]);
+  }, [data, panelId]);
 
   const handleHeaderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = event.target;
@@ -148,8 +150,8 @@ const AnalysisDropdownContent = ({
           setShowFilterSelector={setShowFilterSelector}
         />
       )}
-      {data?.plot && <div id="plot"></div>}
-      {data?.big_plot && <div id="big_plot"></div>}
+      {data?.plot && <div id={`plot-${panelId}`}></div>}
+      {data?.big_plot && <div id={`big_plot-${panelId}`}></div>}
     </div>
   );
 };

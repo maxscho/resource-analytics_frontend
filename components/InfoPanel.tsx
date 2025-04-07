@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import "../styles/components/InfoPanel.module.css";
+import styles from "../styles/components/InfoPanel.module.css";
 
 interface InfoPanelProps {
   selectedAnalysis: string;
@@ -49,7 +49,7 @@ const InfoPanel = ({ selectedAnalysis }: InfoPanelProps) => {
                 aria-label="Close"
               ></button>
             </div>
-            <div className="modal-body">{infoContent}</div>
+            <div className={`modal-body ${styles.textBody}`}>{infoContent}</div>
           </div>
         </div>
       </div>

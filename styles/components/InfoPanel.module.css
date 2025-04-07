@@ -1,0 +1,5 @@
+.textBody {
+    word-wrap: break-word; /* Break long words */
+    white-space: pre-wrap; /* Preserve whitespace and wrap text */
+    overflow-wrap: break-word; /* Handle overflow */
+  }

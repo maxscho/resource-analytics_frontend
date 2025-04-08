@@ -45,6 +45,11 @@
   display: flex;
 }
 
+.alignLeft {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .buttonElement {
   margin-right: 10px;
 }

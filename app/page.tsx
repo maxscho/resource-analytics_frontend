@@ -2,34 +2,33 @@
 
 import { useState, useEffect } from "react";
 import FileUpload from "../components/FileUpload";
-import ImageViewer from "../components/ImageViewer";
 import DataTable from "../components/DataTable";
 import Loader from "../components/Loader";
 import styles from "../styles/components/pages.module.css";
 import Head from "next/head";
-import { AnalysisData } from "../models/AnalysisData";
 import AnalysisPanel from "../components/AnalysisPanel";
 import { v4 as uuidv4 } from "uuid";
+import ReactFlowChart from "@/components/ReactFlowChart";
+import { Node, ReactFlowProvider } from "reactflow";
 
 export default function Home() {
-  const [imageSrc, setImageSrc] = useState<string>("");
-  const [metaData, setMetaData] = useState<MetaEventData[]>([]); // meta-information of the uploaded event log
+  const [flowNodes, setFlowNodes] = useState<any[]>([]);
+  const [flowEdges, setFlowEdges] = useState<any[]>([]);
+  const [metaData, setMetaData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [dropdownOptions, setDropdownOptions] = useState<{
-    metrics: { label: string; value: string }[];
-    resources: { label: string; value: string }[];
-    roles: { label: string; value: string }[];
-    activities: { label: string; value: string }[];
-  }>({
-    metrics: [],
-    resources: [],
-    roles: [],
-    activities: [],
+  const [dropdownOptions, setDropdownOptions] = useState({
+    metrics: [] as { label: string; value: string }[],
+    resources: [] as { label: string; value: string }[],
+    roles: [] as { label: string; value: string }[],
+    activities: [] as { label: string; value: string }[],
   });
   const [showProcessOverview, setShowProcessOverview] = useState(true);
-  const [analysisInstances, setAnalysisInstances] = useState<string[]>([
-    uuidv4(),
-  ]);
+  const [analysisInstances, setAnalysisInstances] = useState<string[]>([uuidv4(),]);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [analysisData, setAnalysisData] = useState<any>(null);
+  const [nodeSelectData, setNodeSelectData] = useState<any>(null);
+  const [initialPanelId, setInitialPanelId] = useState<string | null>(null);
+  const [showUploadMenue, setShowUploadMenue] = useState(true);
 
   const addAnalysisInstance = () => {
     const panelId = uuidv4();
@@ -78,20 +77,22 @@ export default function Home() {
     formData.append("file", file);
 
     try {
-      const response = await fetch(`http://localhost:9090/upload?panel_id=${analysisInstances[0]}`, {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
+      const response = await fetch(
+        `http://localhost:9090/upload?panel_id=${analysisInstances[0]}`,
+        {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        }
+      );
       const data = await response.json();
       console.log("Upload Response:", data);
-      setImageSrc(`data:image/jpeg;base64,${data.image}`);
+
+      // Set other metadata
       setMetaData(data.table);
+      console.log("I was here Meta Data:", data.table);
       setDropdownOptions({
-        metrics: [].map((item: string) => ({
-          label: item,
-          value: item,
-        })),
+        metrics: [],
         resources: (data.resource || []).map((item: string) => ({
           label: item,
           value: item,
@@ -105,11 +106,41 @@ export default function Home() {
           value: item,
         })),
       });
+
+      if (data.dfg) {
+        console.log("i was in dfg");
+        setFlowNodes(data.dfg.nodes);
+        setFlowEdges(data.dfg.edges);
+      }
+      setShowUploadMenue(false);
     } catch (error) {
       console.error("Error:", error);
     } finally {
+      setInitialPanelId(analysisInstances[0]);
       setIsLoading(false);
     }
+  };
+
+  const handleNodeSelect = async (node: Node) => {
+    setSelectedNode(node.data.label);
+
+    const response = await fetch(
+      "http://localhost:9090/node_selection_detail",
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          activity: node.data.label,
+          panel_id: analysisInstances[0],
+        }),
+      }
+    );
+
+    const data = await response.json();
+    setNodeSelectData(data);
   };
 
   return (
@@ -124,20 +155,26 @@ export default function Home() {
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
         />
-        <script
-          src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-          defer
-        ></script>
       </Head>
 
       <div className={styles.placeholder}>
         <div className={styles.layoutNavigation}>
-          <button
-            onClick={() => setShowProcessOverview(!showProcessOverview)}
-            className={`btn btn-primary btn-sm`}
-          >
-            {showProcessOverview ? "Hide" : "Show"} Process Overview
-          </button>
+          <div className={styles.alignLeft}>
+            <button
+              onClick={() => setShowProcessOverview(!showProcessOverview)}
+              className={`btn btn-primary btn-sm ${styles.buttonElement}`}
+            >
+              {showProcessOverview ? "Hide" : "Show"} Process Overview
+            </button>
+            {showProcessOverview && !showUploadMenue && (
+              <button
+                onClick={() => setShowUploadMenue(true)}
+                className="btn btn-primary btn-sm"
+              >
+                Upload New Event Log
+              </button>
+            )}
+          </div>
           <div className={styles.alignRight}>
             <button
               onClick={addAnalysisInstance}
@@ -150,7 +187,7 @@ export default function Home() {
                 onClick={() =>
                   removeAnalysisInstance(analysisInstances.length - 1)
                 }
-                className={`btn btn-danger btn-sm `}
+                className={`btn btn-danger btn-sm`}
               >
                 Remove Analysis Panel
               </button>
@@ -161,9 +198,20 @@ export default function Home() {
         <div className={styles.container}>
           {showProcessOverview && (
             <div className={styles.leftPanel}>
-              <FileUpload onUpload={handleUpload} />
-              <ImageViewer imageSrc={imageSrc} />
-              <DataTable data={metaData} />
+              {(metaData.length > 0 && !showUploadMenue) ? (
+                <DataTable data={metaData} />
+              ) : (
+                <FileUpload onUpload={handleUpload} />
+              )}
+              {flowNodes.length > 0 && (
+                <ReactFlowProvider>
+                  <ReactFlowChart
+                    initialNodes={flowNodes}
+                    initialEdges={flowEdges}
+                    onNodeSelect={handleNodeSelect}
+                  />
+                </ReactFlowProvider>
+              )}
             </div>
           )}
           <div
@@ -180,7 +228,12 @@ export default function Home() {
               >
                 <AnalysisPanel
                   panelId={panelId}
-                  initialDropdownOptions={dropdownOptions} // Pass initial options
+                  initialDropdownOptions={dropdownOptions}
+                  nodeSelectData={
+                    panelId === initialPanelId ? nodeSelectData : null
+                  }
+                  setNodeSelectData={setNodeSelectData}
+                  initialPanelId={initialPanelId}
                 />
               </div>
             ))}

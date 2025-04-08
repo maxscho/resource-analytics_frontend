@@ -13,11 +13,17 @@ interface AnalysisPanelProps {
     roles: { label: string; value: string }[];
     activities: { label: string; value: string }[];
   };
+  nodeSelectData?: any;
+  setNodeSelectData?: (data: any) => void;
+  initialPanelId?: string | null;
 }
 
 export default function AnalysisPanel({
   panelId,
   initialDropdownOptions,
+  nodeSelectData,
+  setNodeSelectData,
+  initialPanelId
 }: AnalysisPanelProps) {
   const [dropdownOptions, setDropdownOptions] = useState(initialDropdownOptions);
   const [selectedAnalysis, setSelectedAnalysis] = useState<string>("");
@@ -38,6 +44,9 @@ export default function AnalysisPanel({
         setInitialHeaders={setInitialHeaders}
         setSelectedHeaders={setSelectedHeaders}
         dropdownOptions={dropdownOptions}
+        nodeSelectData={nodeSelectData}
+        setNodeSelectData={setNodeSelectData}
+        initialPanelId={initialPanelId}
       />
       <InfoPanel selectedAnalysis={selectedAnalysis} />
       <AnalysisDropdownContent
@@ -54,6 +63,7 @@ export default function AnalysisPanel({
         setInitialHeaders={setInitialHeaders}
         selectedHeaders={selectedHeaders}
         setSelectedHeaders={setSelectedHeaders}
+        nodeSelectData={nodeSelectData}
       />
     </div>
   );

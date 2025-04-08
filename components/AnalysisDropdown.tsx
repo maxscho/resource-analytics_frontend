@@ -20,6 +20,9 @@ interface AnalysisDropdownProps {
     roles: { label: string; value: string }[];
     activities: { label: string; value: string }[];
   };
+  nodeSelectData?: any;
+  setNodeSelectData?: (data: any) => void;
+  initialPanelId?: string | null;
 }
 
 const options = [
@@ -62,6 +65,7 @@ const options = [
     value: "capacity_utilization_activity",
     label: "Activity Capacity Utilization",
   },
+  { value: "analysis_detail", label: "Analysis Details", disabled: true },
 ];
 
 export default function AnalysisDropdown({
@@ -72,6 +76,9 @@ export default function AnalysisDropdown({
   setSelectedHeaders,
   setData,
   dropdownOptions,
+  nodeSelectData,
+  setNodeSelectData,
+  initialPanelId
 }: AnalysisDropdownProps) {
   const [selectedValues, setSelectedValues] = useState<{
     metric: string[];
@@ -88,6 +95,20 @@ export default function AnalysisDropdown({
   const [isInitialRender, setIsInitialRender] = useState(true);
 
   useEffect(() => {
+    if (nodeSelectData && panelId === initialPanelId) {
+      setSelectedAnalysis("analysis_detail");
+    }
+  }, [nodeSelectData, setSelectedAnalysis]);
+
+  useEffect(() => {
+    if (selectedAnalysis !== "analysis_detail" && panelId === initialPanelId) {
+      if (setNodeSelectData) {
+        setNodeSelectData(null);
+      }
+    }
+  }, [selectedAnalysis, setNodeSelectData]);
+
+  useEffect(() => {
     const sendFilterData = async () => {
       try {
         console.log("Selected Values:", selectedValues);
@@ -96,14 +117,14 @@ export default function AnalysisDropdown({
           metric: selectedValues.metric || [],
           resource: selectedValues.resource || [],
           role: selectedValues.role || [],
-          activity: selectedValues.activity || []
+          activity: selectedValues.activity || [],
         });
         console.log("Body:", bodyData);
         const response = await fetch(`http://localhost:9090/filter_analysis`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: bodyData
+          body: bodyData,
         });
 
         if (!response.ok) {
@@ -113,7 +134,7 @@ export default function AnalysisDropdown({
         const filteredData = await response.json();
         console.log("Filtered Response:", filteredData);
 
-        if (selectedAnalysis) {
+        if (selectedAnalysis && selectedAnalysis !== "analysis_detail") {
           const analysisData = await fetchAnalysisData(selectedAnalysis, panelId);
           setData(analysisData);
 
@@ -129,7 +150,7 @@ export default function AnalysisDropdown({
     };
 
     if (!isInitialRender) {
-      // Only call sendFilterData if it's not the initial render otherwise session informatino is not set
+      // Only call sendFilterData if it's not the initial render
       sendFilterData();
     } else {
       setIsInitialRender(false);
@@ -164,6 +185,7 @@ export default function AnalysisDropdown({
           <i className="bi bi-info-circle"></i>
         </button>
       </div>
+
       <div className={styles.analysisFilter}>
         <p>Analysis Filter</p>
         <div className={styles.dropdownElements}>
@@ -208,7 +230,7 @@ export default function AnalysisDropdown({
             }}
           />
         </div>
-      </div>
+      </div> 
     </div>
   );
 }

@@ -9,12 +9,12 @@ import Head from "next/head";
 import AnalysisPanel from "../components/AnalysisPanel";
 import { v4 as uuidv4 } from "uuid";
 import ReactFlowChart from "@/components/ReactFlowChart";
-import { Node, ReactFlowProvider } from "reactflow";
+import { Edge, Node, ReactFlowProvider } from "reactflow";
 
 export default function Home() {
-  const [flowNodes, setFlowNodes] = useState<any[]>([]);
-  const [flowEdges, setFlowEdges] = useState<any[]>([]);
-  const [metaData, setMetaData] = useState<any[]>([]);
+  const [flowNodes, setFlowNodes] = useState<Node[]>([]);
+  const [flowEdges, setFlowEdges] = useState<Edge[]>([]);
+  const [metaData, setMetaData] = useState<MetaEventData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [dropdownOptions, setDropdownOptions] = useState({
     metrics: [] as { label: string; value: string }[],
@@ -24,9 +24,7 @@ export default function Home() {
   });
   const [showProcessOverview, setShowProcessOverview] = useState(true);
   const [analysisInstances, setAnalysisInstances] = useState<string[]>([uuidv4(),]);
-  const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [analysisData, setAnalysisData] = useState<any>(null);
-  const [nodeSelectData, setNodeSelectData] = useState<any>(null);
+  const [nodeSelectData, setNodeSelectData] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [initialPanelId, setInitialPanelId] = useState<string | null>(null);
   const [showUploadMenue, setShowUploadMenue] = useState(true);
 
@@ -90,7 +88,6 @@ export default function Home() {
 
       // Set other metadata
       setMetaData(data.table);
-      console.log("I was here Meta Data:", data.table);
       setDropdownOptions({
         metrics: [],
         resources: (data.resource || []).map((item: string) => ({
@@ -108,7 +105,6 @@ export default function Home() {
       });
 
       if (data.dfg) {
-        console.log("i was in dfg");
         setFlowNodes(data.dfg.nodes);
         setFlowEdges(data.dfg.edges);
       }
@@ -122,7 +118,6 @@ export default function Home() {
   };
 
   const handleNodeSelect = async (node: Node) => {
-    setSelectedNode(node.data.label);
 
     const response = await fetch(
       "http://localhost:9090/node_selection_detail",
@@ -214,11 +209,13 @@ export default function Home() {
               )}
             </div>
           )}
-          <div
+          { metaData.length > 0 && (
+
+            <div
             className={styles.rightPanel}
             style={{ width: showProcessOverview ? "70%" : "100%" }}
-          >
-            {analysisInstances.map((panelId, index) => (
+            >
+            {analysisInstances.map((panelId) => (
               <div
                 key={panelId}
                 className={styles.rightPanelElement}
@@ -229,6 +226,7 @@ export default function Home() {
                 <AnalysisPanel
                   panelId={panelId}
                   initialDropdownOptions={dropdownOptions}
+                  setIsLoading={setIsLoading}
                   nodeSelectData={
                     panelId === initialPanelId ? nodeSelectData : null
                   }
@@ -237,7 +235,9 @@ export default function Home() {
                 />
               </div>
             ))}
-          </div>
+            </div>
+          )}
+
         </div>
       </div>
 

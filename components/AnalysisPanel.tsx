@@ -13,9 +13,10 @@ interface AnalysisPanelProps {
     roles: { label: string; value: string }[];
     activities: { label: string; value: string }[];
   };
-  nodeSelectData?: any;
-  setNodeSelectData?: (data: any) => void;
+  nodeSelectData?: AnalysisData;
+  setNodeSelectData?: (data: AnalysisData) => void;
   initialPanelId?: string | null;
+  setIsLoading: (isLoading: boolean) => void;
 }
 
 export default function AnalysisPanel({
@@ -23,16 +24,16 @@ export default function AnalysisPanel({
   initialDropdownOptions,
   nodeSelectData,
   setNodeSelectData,
-  initialPanelId
+  initialPanelId,
+  setIsLoading,
 }: AnalysisPanelProps) {
-  const [dropdownOptions, setDropdownOptions] = useState(initialDropdownOptions);
+  const [dropdownOptions] = useState(initialDropdownOptions);
   const [selectedAnalysis, setSelectedAnalysis] = useState<string>("");
   const [showColumnSelector, setShowColumnSelector] = useState<boolean>(false);
   const [showFilterSelector, setShowFilterSelector] = useState<boolean>(false);
   const [data, setData] = useState<AnalysisData | null>(null);
   const [initialHeaders, setInitialHeaders] = useState<string[]>([]);
   const [selectedHeaders, setSelectedHeaders] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   return (
     <div className={`${styles.rounded} ${styles.rightPanel}`}>

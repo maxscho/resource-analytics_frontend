@@ -20,8 +20,8 @@ interface AnalysisDropdownProps {
     roles: { label: string; value: string }[];
     activities: { label: string; value: string }[];
   };
-  nodeSelectData?: any;
-  setNodeSelectData?: (data: any) => void;
+  nodeSelectData?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  setNodeSelectData?: (data: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
   initialPanelId?: string | null;
 }
 
@@ -101,6 +101,7 @@ export default function AnalysisDropdown({
   }, [nodeSelectData, setSelectedAnalysis]);
 
   useEffect(() => {
+    console.log("Selected Analysis:", selectedAnalysis);
     if (selectedAnalysis !== "analysis_detail" && panelId === initialPanelId) {
       if (setNodeSelectData) {
         setNodeSelectData(null);

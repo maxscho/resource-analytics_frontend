@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import DataTable from "./DataTable";
+import { AnalysisData } from "@/models/AnalysisData";
 
 interface ActivityDetailProps {
-  nodeSelectData: any;
+  nodeSelectData: AnalysisData;
 }
 
 const ActivityDetail = ({ nodeSelectData }: ActivityDetailProps) => {
   const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
-  const [parsedPlot, setParsedPlot] = useState<any>(null);
+  const [parsedPlot, setParsedPlot] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   useEffect(() => {
     if (nodeSelectData?.plot) {
@@ -29,7 +30,7 @@ const ActivityDetail = ({ nodeSelectData }: ActivityDetailProps) => {
       {nodeSelectData?.table && (
         <DataTable
           data={nodeSelectData.table
-            .map((row: any) =>
+            .map((row: Record<string, string | number>) =>
               Object.keys(row).map((key) => ({
                 column: key,
                 value: row[key],

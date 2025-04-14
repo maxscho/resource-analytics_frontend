@@ -20,7 +20,7 @@ interface AnalysisDropdownContentProps {
   setSelectedHeaders: React.Dispatch<React.SetStateAction<string[]>>;
   data: AnalysisData | null;
   setData: (data: AnalysisData | null) => void;
-  nodeSelectData?: any;
+  nodeSelectData?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 const AnalysisDropdownContent = ({

@@ -89,7 +89,7 @@ const TableFilter = ({
             setShowColumnSelector(false);
           }}
         >
-          <span>Show Table Filter</span>
+          <span>Table Filter</span>
           {showFilterSelector ? (
             <i className="bi bi-chevron-up ms-2 fs-6"></i>
           ) : (

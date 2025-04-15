@@ -1,21 +1,45 @@
 .dropdownSelect {
-    width: 120px;
-    white-space: nowrap;
-    overflow: hidden; /* Hide overflowing text */
-    text-overflow: ellipsis; /* Add ellipsis (...) for overflowing text */
-    background-color: #336699;
-    color: white;
-    padding: 5px;
-    border: none;
-    cursor: pointer;
-    user-select: none;
-    position: relative;
-    border-radius: 5px;
+  width: 120px;
+  white-space: nowrap;
+  overflow: hidden; /* Hide overflowing text */
+  text-overflow: ellipsis; /* Add ellipsis (...) for overflowing text */
+  background-color: #336699;
+  color: white;
+  padding: 5px;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  border-radius: 5px;
 }
 
 .dropdownSelect::after {
-    content: "\25BC";
-    position: absolute;
-    right: 20px;
-    top: calc(50% - 0.5em);
+  content: "\25BC";
+  position: absolute;
+  right: 20px;
+  top: calc(50% - 0.5em);
+}
+
+.searchInput {
+  background-color: lightgrey;
+  outline: none;
+  box-shadow: none;
+  border: 1px solid #ced4da;
+  padding-right: 2rem; /* Add space for the clear button */
+}
+
+.clearSearchButton {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6c757d;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.clearSearchButton {
+  color: #000;
 }

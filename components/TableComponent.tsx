@@ -140,7 +140,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
           </div>
           <div className={styles.paginationBar}>
             <label htmlFor="rowsPerPage" style={{ marginRight: "10px" }}>
-              Rows per page:
+              Rows page:
             </label>
             <input
               type="number"
@@ -163,7 +163,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
               setShowColumnSelector(false);
             }}
           >
-            <span>Show Table Filter</span>
+            <span>Table Filter</span>
             {showFilterSelector ? (
               <i className="bi bi-chevron-up ms-2 fs-6"></i>
             ) : (

@@ -4,9 +4,10 @@ import styles from "../styles/components/DataTable.module.css";
 
 interface DataTableProps {
   data: { [key: string]: any }[]; // eslint-disable-line @typescript-eslint/no-explicit-any
+  useHeader?: boolean;
 }
 
-export default function DataTable({ data }: DataTableProps) {
+export default function DataTable({ data, useHeader }: DataTableProps) {
   if (!data || data.length === 0) {
     return <div>No data available</div>;
   }
@@ -16,13 +17,15 @@ export default function DataTable({ data }: DataTableProps) {
   return (
     <div className={`${styles.rounded} ${styles.dataTable}`}>
       <table>
-        <thead>
-          <tr style={{ backgroundColor: "darkgrey" }}>
-            {headers.map((header) => (
-              <th key={header}>{header}</th>
-            ))}
-          </tr>
-        </thead>
+        {useHeader && 
+          <thead>
+            <tr style={{ backgroundColor: "darkgrey" }}>
+              {headers.map((header) => (
+                <th key={header}>{header}</th>
+              ))}
+            </tr>
+          </thead>
+        }
         <tbody>
           {data.map((row, rowIndex) => (
             <tr

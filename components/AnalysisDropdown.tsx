@@ -8,6 +8,7 @@ import { fetchAnalysisData } from "@/app/api/fetch/fetchDataAnalysis";
 import { AnalysisData } from "../models/AnalysisData";
 
 interface AnalysisDropdownProps {
+  panelId: string;
   selectedAnalysis: string;
   setSelectedAnalysis: (analysis: string) => void;
   setInitialHeaders: (headers: string[]) => void;
@@ -19,6 +20,9 @@ interface AnalysisDropdownProps {
     roles: { label: string; value: string }[];
     activities: { label: string; value: string }[];
   };
+  nodeSelectData?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  setNodeSelectData?: (data: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
+  initialPanelId?: string | null;
 }
 
 const options = [
@@ -61,40 +65,67 @@ const options = [
     value: "capacity_utilization_activity",
     label: "Activity Capacity Utilization",
   },
+  { value: "analysis_detail", label: "Analysis Details", disabled: true },
 ];
 
 export default function AnalysisDropdown({
+  panelId,
   selectedAnalysis,
   setSelectedAnalysis,
   setInitialHeaders,
   setSelectedHeaders,
   setData,
-  dropdownOptions
+  dropdownOptions,
+  nodeSelectData,
+  setNodeSelectData,
+  initialPanelId
 }: AnalysisDropdownProps) {
-
   const [selectedValues, setSelectedValues] = useState<{
-    metric: string;
-    resource: string;
-    role: string;
-    activity: string;
+    metric: string[];
+    resource: string[];
+    role: string[];
+    activity: string[];
   }>({
-    metric: "",
-    resource: "",
-    role: "",
-    activity: "",
+    metric: [],
+    resource: [],
+    role: [],
+    activity: [],
   });
 
   const [isInitialRender, setIsInitialRender] = useState(true);
 
   useEffect(() => {
+    if (nodeSelectData && panelId === initialPanelId) {
+      setSelectedAnalysis("analysis_detail");
+    }
+  }, [nodeSelectData, setSelectedAnalysis]);
 
+  useEffect(() => {
+    console.log("Selected Analysis:", selectedAnalysis);
+    if (selectedAnalysis !== "analysis_detail" && panelId === initialPanelId) {
+      if (setNodeSelectData) {
+        setNodeSelectData(null);
+      }
+    }
+  }, [selectedAnalysis, setNodeSelectData]);
+
+  useEffect(() => {
     const sendFilterData = async () => {
       try {
-        const response = await fetch("http://localhost:9090/filter_analysis", {
+        console.log("Selected Values:", selectedValues);
+        const bodyData = JSON.stringify({
+          panel_id: panelId,
+          metric: selectedValues.metric || [],
+          resource: selectedValues.resource || [],
+          role: selectedValues.role || [],
+          activity: selectedValues.activity || [],
+        });
+        console.log("Body:", bodyData);
+        const response = await fetch(`http://localhost:9090/filter_analysis`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(selectedValues),
+          body: bodyData,
         });
 
         if (!response.ok) {
@@ -104,8 +135,8 @@ export default function AnalysisDropdown({
         const filteredData = await response.json();
         console.log("Filtered Response:", filteredData);
 
-        if (selectedAnalysis) {
-          const analysisData = await fetchAnalysisData(selectedAnalysis);
+        if (selectedAnalysis && selectedAnalysis !== "analysis_detail") {
+          const analysisData = await fetchAnalysisData(selectedAnalysis, panelId);
           setData(analysisData);
 
           if (analysisData.table) {
@@ -120,7 +151,7 @@ export default function AnalysisDropdown({
     };
 
     if (!isInitialRender) {
-      // Only call sendFilterData if it's not the initial render otherwise session informatino is not set
+      // Only call sendFilterData if it's not the initial render
       sendFilterData();
     } else {
       setIsInitialRender(false);
@@ -155,6 +186,7 @@ export default function AnalysisDropdown({
           <i className="bi bi-info-circle"></i>
         </button>
       </div>
+
       <div className={styles.analysisFilter}>
         <p>Analysis Filter</p>
         <div className={styles.dropdownElements}>
@@ -162,32 +194,44 @@ export default function AnalysisDropdown({
             label="Metric"
             options={dropdownOptions.metrics}
             onChange={(value) => {
-              setSelectedValues((prev) => ({ ...prev, metric: value }));
+              setSelectedValues((prev) => ({
+                ...prev,
+                metric: value,
+              }));
             }}
           />
           <DropdownElement
             label="Resource"
             options={dropdownOptions.resources}
             onChange={(value) => {
-              setSelectedValues((prev) => ({ ...prev, resource: value }));
+              setSelectedValues((prev) => ({
+                ...prev,
+                resource: value,
+              }));
             }}
           />
           <DropdownElement
             label="Role"
             options={dropdownOptions.roles}
             onChange={(value) => {
-              setSelectedValues((prev) => ({ ...prev, role: value }));
+              setSelectedValues((prev) => ({
+                ...prev,
+                role: value,
+              }));
             }}
           />
           <DropdownElement
             label="Activity"
             options={dropdownOptions.activities}
             onChange={(value) => {
-              setSelectedValues((prev) => ({ ...prev, activity: value }));
+              setSelectedValues((prev) => ({
+                ...prev,
+                activity: value,
+              }));
             }}
           />
         </div>
-      </div>
+      </div> 
     </div>
   );
 }

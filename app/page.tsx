@@ -2,37 +2,56 @@
 
 import { useState, useEffect } from "react";
 import FileUpload from "../components/FileUpload";
-import ImageViewer from "../components/ImageViewer";
 import DataTable from "../components/DataTable";
-import AnalysisDropdown from "../components/AnalysisDropdown";
 import Loader from "../components/Loader";
-import styles from "../styles/components/Home.module.css";
+import styles from "../styles/components/pages.module.css";
 import Head from "next/head";
-import AnalysisDropdownContent from "@/components/AnalysisDropdownContent";
-import InfoPanel from "@/components/InfoPanel";
-import { AnalysisData } from "../models/AnalysisData";
+import AnalysisPanel from "../components/AnalysisPanel";
+import { v4 as uuidv4 } from "uuid";
+import ReactFlowChart from "@/components/ReactFlowChart";
+import { Edge, Node, ReactFlowProvider } from "reactflow";
 
 export default function Home() {
-  const [imageSrc, setImageSrc] = useState<string>("");
-  const [metaData, setMetaData] = useState<MetaEventData[]>([]); // meta-information of the uploaded event log
+  const [flowNodes, setFlowNodes] = useState<Node[]>([]);
+  const [flowEdges, setFlowEdges] = useState<Edge[]>([]);
+  const [metaData, setMetaData] = useState<MetaEventData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [selectedAnalysis, setSelectedAnalysis] = useState<string>("");
-  const [showColumnSelector, setShowColumnSelector] = useState<boolean>(false);
-  const [showFilterSelector, setShowFilterSelector] = useState(false);
-  const [data, setData] = useState<AnalysisData | null>(null);
-  const [initialHeaders, setInitialHeaders] = useState<string[]>([]);
-  const [selectedHeaders, setSelectedHeaders] = useState<string[]>([]);
-  const [dropdownOptions, setDropdownOptions] = useState<{
-    metrics: { label: string; value: string }[];
-    resources: { label: string; value: string }[];
-    roles: { label: string; value: string }[];
-    activities: { label: string; value: string }[];
-  }>({
-    metrics: [],
-    resources: [],
-    roles: [],
-    activities: [],
+  const [dropdownOptions, setDropdownOptions] = useState({
+    metrics: [] as { label: string; value: string }[],
+    resources: [] as { label: string; value: string }[],
+    roles: [] as { label: string; value: string }[],
+    activities: [] as { label: string; value: string }[],
   });
+  const [showProcessOverview, setShowProcessOverview] = useState(true);
+  const [analysisInstances, setAnalysisInstances] = useState<string[]>([uuidv4(),]);
+  const [nodeSelectData, setNodeSelectData] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [initialPanelId, setInitialPanelId] = useState<string | null>(null);
+  const [showUploadMenue, setShowUploadMenue] = useState(true);
+
+  const addAnalysisInstance = () => {
+    const panelId = uuidv4();
+    fetch(`http://localhost:9090/add_panel?panel_id=${panelId}`, {
+      method: "POST",
+      credentials: "include",
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to add panel");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Add Panel Response:", data);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+    setAnalysisInstances([...analysisInstances, panelId]);
+  };
+
+  const removeAnalysisInstance = (index: number) => {
+    setAnalysisInstances(analysisInstances.filter((_, i) => i !== index));
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -56,20 +75,21 @@ export default function Home() {
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://localhost:9090/upload", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
+      const response = await fetch(
+        `http://localhost:9090/upload?panel_id=${analysisInstances[0]}`,
+        {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        }
+      );
       const data = await response.json();
       console.log("Upload Response:", data);
-      setImageSrc(`data:image/jpeg;base64,${data.image}`);
+
+      // Set other metadata
       setMetaData(data.table);
       setDropdownOptions({
-        metrics: [].map((item: string) => ({
-          label: item,
-          value: item,
-        })),
+        metrics: [],
         resources: (data.resource || []).map((item: string) => ({
           label: item,
           value: item,
@@ -83,11 +103,39 @@ export default function Home() {
           value: item,
         })),
       });
+
+      if (data.dfg) {
+        setFlowNodes(data.dfg.nodes);
+        setFlowEdges(data.dfg.edges);
+      }
+      setShowUploadMenue(false);
     } catch (error) {
       console.error("Error:", error);
     } finally {
+      setInitialPanelId(analysisInstances[0]);
       setIsLoading(false);
     }
+  };
+
+  const handleNodeSelect = async (node: Node) => {
+
+    const response = await fetch(
+      "http://localhost:9090/node_selection_detail",
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          activity: node.data.label,
+          panel_id: analysisInstances[0],
+        }),
+      }
+    );
+
+    const data = await response.json();
+    setNodeSelectData(data);
   };
 
   return (
@@ -102,42 +150,94 @@ export default function Home() {
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
         />
-        <script
-          src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-          defer
-        ></script>
       </Head>
 
-      <div className={styles.container}>
-        <div className={styles.leftPanel}>
-          <FileUpload onUpload={handleUpload} />
-          <ImageViewer imageSrc={imageSrc} />
-          <DataTable data={metaData} />
+      <div className={styles.placeholder}>
+        <div className={styles.layoutNavigation}>
+          <div className={styles.alignLeft}>
+            <button
+              onClick={() => setShowProcessOverview(!showProcessOverview)}
+              className={`btn btn-primary btn-sm ${styles.buttonElement}`}
+            >
+              {showProcessOverview ? "Hide" : "Show"} Process Overview
+            </button>
+            {showProcessOverview && !showUploadMenue && (
+              <button
+                onClick={() => setShowUploadMenue(true)}
+                className="btn btn-primary btn-sm"
+              >
+                Upload New Event Log
+              </button>
+            )}
+          </div>
+          <div className={styles.alignRight}>
+            <button
+              onClick={addAnalysisInstance}
+              className={`btn btn-success btn-sm ${styles.buttonElement}`}
+            >
+              Add Analysis Panel
+            </button>
+            {analysisInstances.length > 1 && (
+              <button
+                onClick={() =>
+                  removeAnalysisInstance(analysisInstances.length - 1)
+                }
+                className={`btn btn-danger btn-sm`}
+              >
+                Remove Analysis Panel
+              </button>
+            )}
+          </div>
         </div>
-        <div className={`${styles.rounded} ${styles.rightPanel}`}>
-          <AnalysisDropdown
-            selectedAnalysis={selectedAnalysis}
-            setSelectedAnalysis={setSelectedAnalysis}
-            setData={setData}
-            setInitialHeaders={setInitialHeaders}
-            setSelectedHeaders={setSelectedHeaders}
-            dropdownOptions={dropdownOptions}
-          />
-          <InfoPanel selectedAnalysis={selectedAnalysis} />
-          <AnalysisDropdownContent
-            selectedAnalysis={selectedAnalysis}
-            setIsLoading={setIsLoading}
-            showFilterSelector={showFilterSelector}
-            setShowFilterSelector={setShowFilterSelector}
-            showColumnSelector={showColumnSelector}
-            setShowColumnSelector={setShowColumnSelector}
-            data={data}
-            setData={setData}
-            initialHeaders={initialHeaders}
-            setInitialHeaders={setInitialHeaders}
-            selectedHeaders={selectedHeaders}
-            setSelectedHeaders={setSelectedHeaders}
-          />
+
+        <div className={styles.container}>
+          {showProcessOverview && (
+            <div className={styles.leftPanel}>
+              {(metaData.length > 0 && !showUploadMenue) ? (
+                <DataTable data={metaData} />
+              ) : (
+                <FileUpload onUpload={handleUpload} />
+              )}
+              {flowNodes.length > 0 && (
+                <ReactFlowProvider>
+                  <ReactFlowChart
+                    initialNodes={flowNodes}
+                    initialEdges={flowEdges}
+                    onNodeSelect={handleNodeSelect}
+                  />
+                </ReactFlowProvider>
+              )}
+            </div>
+          )}
+          { metaData.length > 0 && (
+
+            <div
+            className={styles.rightPanel}
+            style={{ width: showProcessOverview ? "70%" : "100%" }}
+            >
+            {analysisInstances.map((panelId) => (
+              <div
+                key={panelId}
+                className={styles.rightPanelElement}
+                style={{
+                  maxWidth: analysisInstances.length > 1 ? "850px" : "none",
+                }}
+              >
+                <AnalysisPanel
+                  panelId={panelId}
+                  initialDropdownOptions={dropdownOptions}
+                  setIsLoading={setIsLoading}
+                  nodeSelectData={
+                    panelId === initialPanelId ? nodeSelectData : null
+                  }
+                  setNodeSelectData={setNodeSelectData}
+                  initialPanelId={initialPanelId}
+                />
+              </div>
+            ))}
+            </div>
+          )}
+
         </div>
       </div>
 

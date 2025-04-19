@@ -4,6 +4,6 @@ export async function fetchAnalysisData(selectedAnalysis: string, panelId: strin
       credentials: "include",
     });
     const data = await response.json();
-    console.log('Request successful', data);
+    //console.log('Request successful', data);
     return data;
   }

@@ -5,6 +5,9 @@ import { fetchAnalysisData } from "@/app/api/fetch/fetchDataAnalysis";
 import TableComponent from "./TableComponent";
 import { AnalysisData } from "../models/AnalysisData";
 import ActivityDetail from "./ActivityDetail";
+import dynamic from "next/dynamic";
+
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 interface AnalysisDropdownContentProps {
   panelId: string;
@@ -20,7 +23,7 @@ interface AnalysisDropdownContentProps {
   setSelectedHeaders: React.Dispatch<React.SetStateAction<string[]>>;
   data: AnalysisData | null;
   setData: (data: AnalysisData | null) => void;
-  nodeSelectData?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  nodeSelectData?: any;
 }
 
 const AnalysisDropdownContent = ({
@@ -39,9 +42,14 @@ const AnalysisDropdownContent = ({
   setData,
   nodeSelectData,
 }: AnalysisDropdownContentProps) => {
+
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [parsedPlot, setParsedPlot] = useState<any>(null);
+  const [bigParsedPlot, setBigParsedPlot] = useState<any>(null);
+  const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [selectionSource, setSelectionSource] = useState<"plot" | "table" | null>(null);
 
   const plotRef = useRef<HTMLDivElement>(null);
   const bigPlotRef = useRef<HTMLDivElement>(null);
@@ -73,6 +81,27 @@ const AnalysisDropdownContent = ({
   }, [selectedAnalysis, setIsLoading]);
 
   useEffect(() => {
+    if (data?.plot) {
+      try {
+        const parsed = JSON.parse(data.plot);
+        setParsedPlot(parsed);
+      } catch (err) {
+        console.error("Failed to parse plot JSON:", err);
+        setParsedPlot(null);
+      }
+    }
+    if (data?.big_plot) {
+      try {
+        const parsed = JSON.parse(data.big_plot);
+        setBigParsedPlot(parsed);
+      } catch (err) {
+        console.error("Failed to parse big plot JSON:", err);
+        setBigParsedPlot(null);
+      }
+    }
+  }, [data]);
+
+  useEffect(() => {
     if (typeof window !== "undefined" && data?.plot && window.Plotly && plotRef.current) {
       const figure = JSON.parse(data.plot);
       window.Plotly.newPlot(plotRef.current, figure.data, figure.layout);
@@ -94,9 +123,7 @@ const AnalysisDropdownContent = ({
     });
   };
 
-  const handleSelectAllChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleSelectAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { checked } = event.target;
     if (selectedHeaders.length === initialHeaders.length) {
       return;
@@ -116,22 +143,33 @@ const AnalysisDropdownContent = ({
       )
     : [];
 
+  const handlePlotClick = (event: any) => {
+    console.log("Plot clicked", event);
+    if (!data?.table || !parsedPlot) return;
+
+    const point = event.points[0];
+    if (!point) return;
+
+    const yKey = initialHeaders.find((header) => selectedHeaders.includes(header));
+    if (!yKey) return;
+
+    const clickedYValue = point.y;
+    const matchedRow = filteredTableData.find((row) => row[yKey] === clickedYValue);
+
+    if (matchedRow) {
+      setSelectedRow(matchedRow);
+      setSelectionSource("plot");
+    }
+  };
+
   const totalPages = filteredTableData
     ? Math.ceil(filteredTableData.length / rowsPerPage)
     : 1;
-  const currentTableData = filteredTableData
-    ? filteredTableData.slice(
-        (currentPage - 1) * rowsPerPage,
-        currentPage * rowsPerPage
-      )
-    : [];
 
   return (
     <>
       {nodeSelectData ? (
-        <ActivityDetail
-          nodeSelectData={nodeSelectData}
-        />
+        <ActivityDetail nodeSelectData={nodeSelectData} />
       ) : (
         <div>
           {data?.image && (
@@ -156,14 +194,70 @@ const AnalysisDropdownContent = ({
               handlePageChange={handlePageChange}
               currentPage={currentPage}
               totalPages={totalPages}
-              currentTableData={currentTableData}
+              currentTableData={filteredTableData} // pass the full filtered data
               showFilterSelector={showFilterSelector}
               selectedAnalysis={selectedAnalysis}
               setShowFilterSelector={setShowFilterSelector}
+              setSelectedRow={setSelectedRow}
+              selectedRow={selectedRow}
+              selectionSource={selectionSource}
+              setSelectionSource={setSelectionSource}
             />
           )}
-          {data?.plot && <div id={`plot-${panelId}`} ref={plotRef}></div>}
-          {data?.big_plot && <div id={`big_plot-${panelId}`} ref={bigPlotRef}></div>}
+          {parsedPlot && (
+            <Plot
+              data={parsedPlot.data.map((trace: any) => {
+                if (selectedRow && trace.y && trace.y.length > 0) {
+                  const yKey = initialHeaders.find((header) =>
+                    selectedHeaders.includes(header)
+                  );
+                  const selectedYValue = yKey ? selectedRow[yKey] : null;
+                  const highlightIndices = trace.y
+                    .map((yVal: any, idx: number) =>
+                      yVal === selectedYValue ? idx : -1
+                    )
+                    .filter((idx: number) => idx !== -1);
+
+                  const colorArr = trace.y.map((_: any, idx: number) =>
+                    highlightIndices.includes(idx)
+                      ? "lightblue"
+                      : trace.marker?.color || "blue"
+                  );
+                  const sizeArr = trace.y.map((_: any, idx: number) =>
+                    highlightIndices.includes(idx)
+                      ? 16
+                      : trace.marker?.size || 8
+                  );
+
+                  return {
+                    ...trace,
+                    marker: {
+                      ...trace.marker,
+                      color: colorArr,
+                      size: sizeArr,
+                    },
+                  };
+                }
+                return trace;
+              })}
+              layout={parsedPlot.layout}
+              config={parsedPlot.config || {}}
+              style={{ width: "100%", height: "100%" }}
+              useResizeHandler={true}
+              onClick={handlePlotClick}
+            />
+          )}
+          {bigParsedPlot && (
+            <>
+              <Plot
+                data={bigParsedPlot.data}
+                layout={bigParsedPlot.layout}
+                config={bigParsedPlot.config || {}}
+                style={{ width: "100%", height: "100%" }}
+                useResizeHandler={true}
+              />
+            </>
+          )}
         </div>
       )}
     </>

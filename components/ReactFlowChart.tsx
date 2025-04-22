@@ -101,11 +101,10 @@ const ReactFlowChart = ({
     }
 
     load();
-  }, [initialNodes, initialEdges]); // Add dependencies
+  }, [initialNodes, initialEdges]);
 
   const handleNodeClick = (event: React.MouseEvent, node: Node) => {
     onNodeSelect(node);
-    console.log("Node clicked:", node);
   };
 
   // Merge hoverDetails into each node's data

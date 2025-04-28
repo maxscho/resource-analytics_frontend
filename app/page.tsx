@@ -40,9 +40,6 @@ export default function Home() {
         }
         return response.json();
       })
-      .then((data) => {
-        console.log("Add Panel Response:", data);
-      })
       .catch((error) => {
         console.error("Error:", error);
       });
@@ -84,7 +81,6 @@ export default function Home() {
         }
       );
       const data = await response.json();
-      console.log("Upload Response:", data);
 
       // Set other metadata
       setMetaData(data.table);
@@ -201,6 +197,7 @@ export default function Home() {
               {flowNodes.length > 0 && (
                 <ReactFlowProvider>
                   <ReactFlowChart
+                    panelId={initialPanelId || ""}
                     initialNodes={flowNodes}
                     initialEdges={flowEdges}
                     onNodeSelect={handleNodeSelect}

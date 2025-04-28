@@ -9,6 +9,11 @@ import "reactflow/dist/style.css";
 
 import { layoutWithElk } from "@/models/elkLayout";
 import CustomEdge from "./CustomEdge";
+import FlowChartTooltip from "./FlowChartTooltip";
+
+const nodeTypes = {
+  tooltipNode: FlowChartTooltip
+}
 
 const edgeTypes = {
   custom: CustomEdge,
@@ -18,13 +23,14 @@ interface ReactFlowChartProps {
   initialNodes: Node[];
   initialEdges: Edge[];
   onNodeSelect: (node: Node) => void;
+  panelId: string;
 }
 
 function transformBackendData(dfg: { nodes: Node[]; edges: Edge[] }) {
   const nodes = dfg.nodes.map((n) => ({
     id: n.id,
     data: { label: n.data.label },
-    type: 'default',
+    type: 'tooltipNode',
     position: { x: 0, y: 0 },
   }));
 
@@ -45,10 +51,39 @@ function transformBackendData(dfg: { nodes: Node[]; edges: Edge[] }) {
 const ReactFlowChart = ({
   initialNodes,
   initialEdges,
-  onNodeSelect
+  onNodeSelect,
+  panelId,
 }: ReactFlowChartProps) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [hoverDetails, setHoverDetails] = useState<Record<string, any>>({}); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  useEffect(() => {
+    async function fetchHoverDetails() {
+      if (initialNodes.length > 0) {
+        try {
+          const postResult = await fetch("http://localhost:9090/node_hover_detail", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              panel_id: panelId, // Assuming analysisInstances[0] corresponds to initialNodes[0]?.id
+            }),
+          });
+
+          const hoverData = await postResult.json();
+          setHoverDetails(hoverData);
+          console.log("node hover detail", hoverData);
+        } catch (error) {
+          console.error("Error fetching node hover detail:", error);
+        }
+      }
+    }
+
+    fetchHoverDetails();
+  }, [initialNodes]);
 
   useEffect(() => {
     async function load() {
@@ -65,25 +100,36 @@ const ReactFlowChart = ({
     }
 
     load();
-  }, []);
+  }, [initialNodes, initialEdges]);
 
   const handleNodeClick = (event: React.MouseEvent, node: Node) => {
     onNodeSelect(node);
-    console.log("Node clicked:", node);
   };
+
+  // Merge hoverDetails into each node's data
+  const nodesWithHoverDetails = nodes.map((node) => ({
+    ...node,
+    data: {
+      ...node.data,
+      ...(hoverDetails[node.id] ? hoverDetails[node.id] : {}),
+    },
+  }));
 
   return (
     <div style={{ width: "100%", height: "70vh" }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        fitView
-        onNodeClick={handleNodeClick}
-        edgeTypes={edgeTypes} // register the custom edge type
-      >
-        <Controls />
-        <MiniMap pannable zoomable />
-      </ReactFlow>
+      {nodes.length > 0 && (
+        <ReactFlow
+          nodes={nodesWithHoverDetails}
+          edges={edges}
+          fitView
+          onNodeClick={handleNodeClick}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+        >
+          <Controls />
+          <MiniMap pannable zoomable />
+        </ReactFlow>
+      )}
     </div>
   );
 };

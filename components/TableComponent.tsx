@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import styles from "@/styles/components/AnalysisDropdownContent.module.css";
 import TableFilter from "./TableFilter";
 
@@ -8,9 +8,9 @@ interface TableComponentProps {
   showColumnSelector: boolean;
   setShowColumnSelector: (show: boolean) => void;
   rowsPerPage: number;
-  setRowsPerPage: (rows: number) => void;
+  setRowsPerPage: React.Dispatch<React.SetStateAction<number>>;
   searchQuery: string;
-  setSearchQuery: (query: string) => void;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   handleHeaderChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectAllChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handlePageChange: (newPage: number) => void;
@@ -18,8 +18,14 @@ interface TableComponentProps {
   totalPages: number;
   currentTableData: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   showFilterSelector: boolean;
-  setShowFilterSelector: (show: boolean) => void;
   selectedAnalysis: string;
+  setShowFilterSelector: (show: boolean) => void;
+  setSelectedRow: (row: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
+  selectedRow: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  selectionSource: "plot" | "table" | null;
+  setSelectionSource: React.Dispatch<
+    React.SetStateAction<"plot" | "table" | null>
+  >;
 }
 
 const TableComponent: React.FC<TableComponentProps> = ({
@@ -40,11 +46,20 @@ const TableComponent: React.FC<TableComponentProps> = ({
   showFilterSelector,
   setShowFilterSelector,
   selectedAnalysis,
+  setSelectedRow,
+  selectedRow,
+  selectionSource,
+  setSelectionSource,
 }) => {
   const [numericColumns, setNumericColumns] = useState<string[]>([]);
   const [filters, setFilters] = useState<{
     [key: string]: { selectedRadio: string; filterValue: number | string };
   }>({});
+  const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
+  const [selectedRowAbsoluteIndex, setSelectedRowAbsoluteIndex] = useState<
+    number | null
+  >(null);
+  const hasJumpedToPlotSelection = useRef(false);
 
   const handleRowsPerPageChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -105,6 +120,51 @@ const TableComponent: React.FC<TableComponentProps> = ({
   };
 
   const filteredData = applyFilters(currentTableData);
+
+  useEffect(() => {
+    if (!selectedRow) {
+      setSelectedRowIndex(null);
+      setSelectedRowAbsoluteIndex(null);
+      hasJumpedToPlotSelection.current = false;
+      return;
+    }
+    const idx = filteredData.findIndex(
+      (row) => JSON.stringify(row) === JSON.stringify(selectedRow)
+    );
+    setSelectedRowAbsoluteIndex(idx);
+
+    if (idx !== -1) {
+      const page = Math.floor(idx / rowsPerPage) + 1;
+      if (
+        selectionSource === "plot" &&
+        page !== currentPage &&
+        !hasJumpedToPlotSelection.current
+      ) {
+        hasJumpedToPlotSelection.current = true;
+        handlePageChange(page);
+        if(setSelectionSource){
+          setSelectionSource(null);
+        }
+      } else if (page === currentPage) {
+        setSelectedRowIndex(idx % rowsPerPage);
+        hasJumpedToPlotSelection.current = false; // Reset after landing on correct page
+      }
+    } else {
+      setSelectedRowIndex(null);
+      hasJumpedToPlotSelection.current = false;
+    }
+  }, [selectedRow, filteredData, rowsPerPage, selectionSource, currentPage]);
+
+  useEffect(() => {
+    if (
+      selectedRowAbsoluteIndex !== null &&
+      Math.floor(selectedRowAbsoluteIndex / rowsPerPage) + 1 === currentPage
+    ) {
+      setSelectedRowIndex(selectedRowAbsoluteIndex % rowsPerPage);
+    } else {
+      setSelectedRowIndex(null);
+    }
+  }, [currentPage, rowsPerPage, selectedRowAbsoluteIndex]);
 
   return (
     <div className={styles.tableContent}>
@@ -170,6 +230,19 @@ const TableComponent: React.FC<TableComponentProps> = ({
               <i className="bi bi-chevron-down ms-2 fs-6"></i>
             )}
           </button>
+
+          <button
+            className="btn btn-primary"
+            style={{ marginLeft: "15px" }}
+            onClick={() => {
+              setSelectedRowIndex(null);
+              if(setSelectedRow){
+                setSelectedRow(null);
+              }
+            }}
+          >
+            Reset Selected Row
+          </button>
         </div>
       )}
       {showColumnSelector && (
@@ -224,6 +297,9 @@ const TableComponent: React.FC<TableComponentProps> = ({
                     border: "1px solid #ddd",
                     padding: "8px",
                     backgroundColor: "#f4f4f4",
+                    wordBreak: "break-word",
+                    whiteSpace: "normal",
+                    maxWidth: "150px",
                   }}
                 >
                   {key}
@@ -232,20 +308,44 @@ const TableComponent: React.FC<TableComponentProps> = ({
           </tr>
         </thead>
         <tbody>
-          {filteredData.map((row, rowIndex) => (
-            <tr key={rowIndex}>
-              {initialHeaders
-                .filter((key) => selectedHeaders.includes(key))
-                .map((key) => (
-                  <td
-                    key={key}
-                    style={{ border: "1px solid #ddd", padding: "8px" }}
-                  >
-                    {row[key] as React.ReactNode}
-                  </td>
-                ))}
-            </tr>
-          ))}
+          {filteredData
+            .slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage)
+            .map((row, rowIndex) => (
+              <tr
+                key={rowIndex}
+                onClick={() => {
+                  setSelectedRowIndex(rowIndex);
+                  if (setSelectedRow){
+                    setSelectedRow(row);
+                  }
+                  if (setSelectionSource) {
+                    setSelectionSource("table");
+                  }
+                }}
+                style={{
+                  cursor: "pointer",
+                  backgroundColor:
+                    selectedRowIndex === rowIndex ? "#e0e7ff" : undefined,
+                }}
+              >
+                {initialHeaders
+                  .filter((key) => selectedHeaders.includes(key))
+                  .map((key) => (
+                    <td
+                      key={key}
+                      style={{
+                        border: "1px solid #ddd",
+                        padding: "8px",
+                        wordBreak: "break-word",
+                        whiteSpace: "normal",
+                        maxWidth: "200px",
+                      }}
+                    >
+                      {row[key] as React.ReactNode}
+                    </td>
+                  ))}
+              </tr>
+            ))}
         </tbody>
       </table>
       {totalPages > 1 && (

@@ -6,7 +6,7 @@ interface TooltipProps extends NodeProps {
   panelId?: string;
 }
 
-const FlowChartTooltip = memo(({ data, panelId }: TooltipProps) => {
+const FlowChartTooltip = memo(({ data }: TooltipProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
   const [tooltipPos, setTooltipPos] = useState<{top: number, left: number}>({top: 0, left: 0});
@@ -64,7 +64,7 @@ const FlowChartTooltip = memo(({ data, panelId }: TooltipProps) => {
                   { label: "Unique Resources", value: data?.unique_resources ?? "N/A" },
                   { label: "Responsible Role", value: data?.responsible_role ?? "N/A" },
                   { label: "Avg. Duration", value: data?.average_duration ?? "N/A" },
-                ].map((row, idx) => (
+                ].map((row) => (
                   <tr key={row.label}>
                     <td><strong>{row.label}</strong></td>
                     <td>{row.value}</td>

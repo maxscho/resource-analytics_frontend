@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { fetchAnalysisData } from "@/app/api/fetch/fetchDataAnalysis";
 import TableComponent from "./TableComponent";
 import { AnalysisData } from "../models/AnalysisData";
@@ -23,7 +23,7 @@ interface AnalysisDropdownContentProps {
   setSelectedHeaders: React.Dispatch<React.SetStateAction<string[]>>;
   data: AnalysisData | null;
   setData: (data: AnalysisData | null) => void;
-  nodeSelectData?: any;
+  nodeSelectData?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 const AnalysisDropdownContent = ({
@@ -46,13 +46,10 @@ const AnalysisDropdownContent = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [parsedPlot, setParsedPlot] = useState<any>(null);
-  const [bigParsedPlot, setBigParsedPlot] = useState<any>(null);
-  const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [parsedPlot, setParsedPlot] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [bigParsedPlot, setBigParsedPlot] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [selectedRow, setSelectedRow] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [selectionSource, setSelectionSource] = useState<"plot" | "table" | null>(null);
-
-  const plotRef = useRef<HTMLDivElement>(null);
-  const bigPlotRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -101,18 +98,6 @@ const AnalysisDropdownContent = ({
     }
   }, [data]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && data?.plot && window.Plotly && plotRef.current) {
-      const figure = JSON.parse(data.plot);
-      window.Plotly.newPlot(plotRef.current, figure.data, figure.layout);
-    }
-
-    if (typeof window !== "undefined" && data?.big_plot && window.Plotly && bigPlotRef.current) {
-      const bigFigure = JSON.parse(data.big_plot);
-      window.Plotly.newPlot(bigPlotRef.current, bigFigure.data, bigFigure.layout);
-    }
-  }, [data, panelId]);
-
   const handleHeaderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = event.target;
     setSelectedHeaders((prevSelectedHeaders) => {
@@ -143,7 +128,7 @@ const AnalysisDropdownContent = ({
       )
     : [];
 
-  const handlePlotClick = (event: any) => {
+  const handlePlotClick = (event: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.log("Plot clicked", event);
     if (!data?.table || !parsedPlot) return;
 
@@ -206,24 +191,24 @@ const AnalysisDropdownContent = ({
           )}
           {parsedPlot && (
             <Plot
-              data={parsedPlot.data.map((trace: any) => {
+              data={parsedPlot.data.map((trace: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
                 if (selectedRow && trace.y && trace.y.length > 0) {
                   const yKey = initialHeaders.find((header) =>
                     selectedHeaders.includes(header)
                   );
                   const selectedYValue = yKey ? selectedRow[yKey] : null;
                   const highlightIndices = trace.y
-                    .map((yVal: any, idx: number) =>
+                    .map((yVal: any, idx: number) => // eslint-disable-line @typescript-eslint/no-explicit-any
                       yVal === selectedYValue ? idx : -1
                     )
                     .filter((idx: number) => idx !== -1);
 
-                  const colorArr = trace.y.map((_: any, idx: number) =>
+                  const colorArr = trace.y.map((_: any, idx: number) => // eslint-disable-line @typescript-eslint/no-explicit-any
                     highlightIndices.includes(idx)
                       ? "lightblue"
                       : trace.marker?.color || "blue"
                   );
-                  const sizeArr = trace.y.map((_: any, idx: number) =>
+                  const sizeArr = trace.y.map((_: any, idx: number) => // eslint-disable-line @typescript-eslint/no-explicit-any
                     highlightIndices.includes(idx)
                       ? 16
                       : trace.marker?.size || 8

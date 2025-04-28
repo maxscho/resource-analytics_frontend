@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import ReactFlow, {
   Controls,
   MiniMap,
-  MarkerType,
-  ReactFlowProvider
+  MarkerType
 } from "reactflow";
 import { Node, Edge } from "reactflow";
 import "reactflow/dist/style.css";
@@ -57,7 +56,7 @@ const ReactFlowChart = ({
 }: ReactFlowChartProps) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const [hoverDetails, setHoverDetails] = useState<Record<string, any>>({});
+  const [hoverDetails, setHoverDetails] = useState<Record<string, any>>({}); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   useEffect(() => {
     async function fetchHoverDetails() {

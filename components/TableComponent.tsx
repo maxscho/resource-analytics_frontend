@@ -16,14 +16,16 @@ interface TableComponentProps {
   handlePageChange: (newPage: number) => void;
   currentPage: number;
   totalPages: number;
-  currentTableData: any[];
+  currentTableData: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   showFilterSelector: boolean;
   selectedAnalysis: string;
   setShowFilterSelector: (show: boolean) => void;
-  setSelectedRow: (row: any) => void;
-  selectedRow: any;
+  setSelectedRow: (row: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
+  selectedRow: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   selectionSource: "plot" | "table" | null;
-  setSelectionSource: React.Dispatch<React.SetStateAction<"plot" | "table" | null>>;
+  setSelectionSource: React.Dispatch<
+    React.SetStateAction<"plot" | "table" | null>
+  >;
 }
 
 const TableComponent: React.FC<TableComponentProps> = ({
@@ -54,7 +56,9 @@ const TableComponent: React.FC<TableComponentProps> = ({
     [key: string]: { selectedRadio: string; filterValue: number | string };
   }>({});
   const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
-  const [selectedRowAbsoluteIndex, setSelectedRowAbsoluteIndex] = useState<number | null>(null);
+  const [selectedRowAbsoluteIndex, setSelectedRowAbsoluteIndex] = useState<
+    number | null
+  >(null);
   const hasJumpedToPlotSelection = useRef(false);
 
   const handleRowsPerPageChange = (
@@ -138,7 +142,9 @@ const TableComponent: React.FC<TableComponentProps> = ({
       ) {
         hasJumpedToPlotSelection.current = true;
         handlePageChange(page);
-        setSelectionSource && setSelectionSource(null);
+        if(setSelectionSource){
+          setSelectionSource(null);
+        }
       } else if (page === currentPage) {
         setSelectedRowIndex(idx % rowsPerPage);
         hasJumpedToPlotSelection.current = false; // Reset after landing on correct page
@@ -224,18 +230,19 @@ const TableComponent: React.FC<TableComponentProps> = ({
               <i className="bi bi-chevron-down ms-2 fs-6"></i>
             )}
           </button>
-          
-            <button
-              className="btn btn-primary"
-              style={{ marginLeft: "15px" }}
-              onClick={() => {
-                setSelectedRowIndex(null);
-                setSelectedRow && setSelectedRow(null);
-              }}
-            >
-              Reset Selected Row
+
+          <button
+            className="btn btn-primary"
+            style={{ marginLeft: "15px" }}
+            onClick={() => {
+              setSelectedRowIndex(null);
+              if(setSelectedRow){
+                setSelectedRow(null);
+              }
+            }}
+          >
+            Reset Selected Row
           </button>
-          
         </div>
       )}
       {showColumnSelector && (
@@ -290,6 +297,9 @@ const TableComponent: React.FC<TableComponentProps> = ({
                     border: "1px solid #ddd",
                     padding: "8px",
                     backgroundColor: "#f4f4f4",
+                    wordBreak: "break-word",
+                    whiteSpace: "normal",
+                    maxWidth: "150px",
                   }}
                 >
                   {key}
@@ -305,12 +315,17 @@ const TableComponent: React.FC<TableComponentProps> = ({
                 key={rowIndex}
                 onClick={() => {
                   setSelectedRowIndex(rowIndex);
-                  setSelectedRow && setSelectedRow(row);
-                  setSelectionSource && setSelectionSource("table");
+                  if (setSelectedRow){
+                    setSelectedRow(row);
+                  }
+                  if (setSelectionSource) {
+                    setSelectionSource("table");
+                  }
                 }}
                 style={{
                   cursor: "pointer",
-                  backgroundColor: selectedRowIndex === rowIndex ? "#e0e7ff" : undefined,
+                  backgroundColor:
+                    selectedRowIndex === rowIndex ? "#e0e7ff" : undefined,
                 }}
               >
                 {initialHeaders
@@ -318,7 +333,13 @@ const TableComponent: React.FC<TableComponentProps> = ({
                   .map((key) => (
                     <td
                       key={key}
-                      style={{ border: "1px solid #ddd", padding: "8px" }}
+                      style={{
+                        border: "1px solid #ddd",
+                        padding: "8px",
+                        wordBreak: "break-word",
+                        whiteSpace: "normal",
+                        maxWidth: "200px",
+                      }}
                     >
                       {row[key] as React.ReactNode}
                     </td>

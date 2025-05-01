@@ -23,6 +23,7 @@ interface AnalysisDropdownProps {
   nodeSelectData?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   setNodeSelectData?: (data: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
   initialPanelId?: string | null;
+  setAnalysisSelected: (analysisSelected: boolean) => void;
 }
 
 const options = [
@@ -78,7 +79,8 @@ export default function AnalysisDropdown({
   dropdownOptions,
   nodeSelectData,
   setNodeSelectData,
-  initialPanelId
+  initialPanelId,
+  setAnalysisSelected
 }: AnalysisDropdownProps) {
   const [selectedValues, setSelectedValues] = useState<{
     metric: string[];
@@ -101,7 +103,6 @@ export default function AnalysisDropdown({
   }, [nodeSelectData, setSelectedAnalysis]);
 
   useEffect(() => {
-    console.log("Selected Analysis:", selectedAnalysis);
     if (selectedAnalysis !== "analysis_detail" && panelId === initialPanelId) {
       if (setNodeSelectData) {
         setNodeSelectData(null);
@@ -112,7 +113,6 @@ export default function AnalysisDropdown({
   useEffect(() => {
     const sendFilterData = async () => {
       try {
-        console.log("Selected Values:", selectedValues);
         const bodyData = JSON.stringify({
           panel_id: panelId,
           metric: selectedValues.metric || [],
@@ -120,7 +120,6 @@ export default function AnalysisDropdown({
           role: selectedValues.role || [],
           activity: selectedValues.activity || [],
         });
-        console.log("Body:", bodyData);
         const response = await fetch(`http://localhost:9090/filter_analysis`, {
           method: "POST",
           credentials: "include",
@@ -160,13 +159,14 @@ export default function AnalysisDropdown({
 
   return (
     <div className={styles.container}>
-      <div className={styles.analysisSelection}>
+      <div id="analysisSelectionPanel" className={styles.analysisSelection}>
         <p>Select the analysis</p>
         <select
           id="analysisDropdown"
           className={styles.customSelect}
           value={selectedAnalysis}
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+            setAnalysisSelected(e.target.value !== "");
             setSelectedAnalysis(e.target.value);
           }}
         >
@@ -187,7 +187,7 @@ export default function AnalysisDropdown({
         </button>
       </div>
 
-      <div className={styles.analysisFilter}>
+      <div id="analysisFilterPanel" className={styles.analysisFilter}>
         <p>Analysis Filter</p>
         <div className={styles.dropdownElements}>
           <DropdownElement

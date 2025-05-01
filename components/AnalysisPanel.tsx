@@ -17,6 +17,8 @@ interface AnalysisPanelProps {
   setNodeSelectData?: (data: AnalysisData) => void;
   initialPanelId?: string | null;
   setIsLoading: (isLoading: boolean) => void;
+  setAnalysisSelected: (analysisSelected: boolean) => void;
+  setAnalysisPanelControl: (analysisPanelControl: boolean) => void;
 }
 
 export default function AnalysisPanel({
@@ -26,6 +28,8 @@ export default function AnalysisPanel({
   setNodeSelectData,
   initialPanelId,
   setIsLoading,
+  setAnalysisSelected,
+  setAnalysisPanelControl,
 }: AnalysisPanelProps) {
   const [dropdownOptions] = useState(initialDropdownOptions);
   const [selectedAnalysis, setSelectedAnalysis] = useState<string>("");
@@ -38,6 +42,7 @@ export default function AnalysisPanel({
   return (
     <div className={`${styles.rounded} ${styles.rightPanel}`}>
       <AnalysisDropdown
+        setAnalysisSelected={setAnalysisSelected}
         panelId={panelId}
         selectedAnalysis={selectedAnalysis}
         setSelectedAnalysis={setSelectedAnalysis}
@@ -65,6 +70,7 @@ export default function AnalysisPanel({
         selectedHeaders={selectedHeaders}
         setSelectedHeaders={setSelectedHeaders}
         nodeSelectData={nodeSelectData}
+        setAnalysisPanelControl={setAnalysisPanelControl}
       />
     </div>
   );

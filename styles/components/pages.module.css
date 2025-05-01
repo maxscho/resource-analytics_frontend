@@ -53,3 +53,9 @@
 .buttonElement {
   margin-right: 10px;
 }
+
+.infoButton {
+  position: fixed;
+  left: 20px;
+  right: 20px;
+}

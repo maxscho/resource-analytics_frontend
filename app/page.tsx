@@ -10,6 +10,12 @@ import AnalysisPanel from "../components/AnalysisPanel";
 import { v4 as uuidv4 } from "uuid";
 import ReactFlowChart from "@/components/ReactFlowChart";
 import { Edge, Node, ReactFlowProvider } from "reactflow";
+import dynamic from "next/dynamic";
+
+const OnboardingTutorial = dynamic(
+  () => import("@/components/OnboardingTutorial"),
+  { ssr: false }
+);
 
 export default function Home() {
   const [flowNodes, setFlowNodes] = useState<Node[]>([]);
@@ -23,10 +29,17 @@ export default function Home() {
     activities: [] as { label: string; value: string }[],
   });
   const [showProcessOverview, setShowProcessOverview] = useState(true);
-  const [analysisInstances, setAnalysisInstances] = useState<string[]>([uuidv4(),]);
+  const [analysisInstances, setAnalysisInstances] = useState<string[]>([
+    uuidv4(),
+  ]);
   const [nodeSelectData, setNodeSelectData] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [initialPanelId, setInitialPanelId] = useState<string | null>(null);
   const [showUploadMenue, setShowUploadMenue] = useState(true);
+
+  const [runOnboardingTutorial, setRunOnboardingTutorial] = useState(false);
+  const [eventlogUploaded, setEventlogUploaded] = useState(false);
+  const [analysisSelected, setAnalysisSelected] = useState(false);
+  const [analysisPanelControl, setAnalysisPanelControl] = useState(true);
 
   const addAnalysisInstance = () => {
     const panelId = uuidv4();
@@ -55,9 +68,6 @@ export default function Home() {
       const plotlyScript = document.createElement("script");
       plotlyScript.src = "https://cdn.plot.ly/plotly-2.27.0.min.js";
       plotlyScript.async = true;
-      plotlyScript.onload = () => {
-        console.log("Plotly script loaded");
-      };
       document.body.appendChild(plotlyScript);
 
       return () => {
@@ -83,6 +93,7 @@ export default function Home() {
       const data = await response.json();
 
       // Set other metadata
+      setEventlogUploaded(true);
       setMetaData(data.table);
       setDropdownOptions({
         metrics: [],
@@ -114,7 +125,6 @@ export default function Home() {
   };
 
   const handleNodeSelect = async (node: Node) => {
-
     const response = await fetch(
       "http://localhost:9090/node_selection_detail",
       {
@@ -148,28 +158,44 @@ export default function Home() {
         />
       </Head>
 
+      <OnboardingTutorial
+        runOnboardingTutorial={runOnboardingTutorial}
+        setRunOnboardingTutorial={setRunOnboardingTutorial}
+        eventlogUploaded={eventlogUploaded}
+        analysisSelected={analysisSelected}
+        analysisPanelControl={analysisPanelControl}
+      />
+
       <div className={styles.placeholder}>
         <div className={styles.layoutNavigation}>
           <div className={styles.alignLeft}>
             <button
               onClick={() => setShowProcessOverview(!showProcessOverview)}
-              className={`btn btn-primary btn-sm ${styles.buttonElement}`}
+              className={`btn btn-primary btn-sm ${styles.buttonElement} processOverviewButton`}
             >
-              {showProcessOverview ? "Hide" : "Show"} Process Overview
+              {showProcessOverview ? (
+                <i className="bi bi-arrow-bar-left"></i>
+              ) : (
+                <i className="bi bi-arrow-bar-right"></i>
+              )}
             </button>
             {showProcessOverview && !showUploadMenue && (
               <button
-                onClick={() => setShowUploadMenue(true)}
+                onClick={() => {
+                  setShowUploadMenue(true);
+                  setEventlogUploaded(false);
+                }}
                 className="btn btn-primary btn-sm"
               >
                 Upload New Event Log
               </button>
             )}
           </div>
+
           <div className={styles.alignRight}>
             <button
               onClick={addAnalysisInstance}
-              className={`btn btn-success btn-sm ${styles.buttonElement}`}
+              className={`btn btn-success btn-sm ${styles.buttonElement} addAnalysisButton`}
             >
               Add Analysis Panel
             </button>
@@ -189,54 +215,64 @@ export default function Home() {
         <div className={styles.container}>
           {showProcessOverview && (
             <div className={styles.leftPanel}>
-              {(metaData.length > 0 && !showUploadMenue) ? (
+              {metaData.length > 0 && !showUploadMenue ? (
                 <DataTable data={metaData} />
               ) : (
                 <FileUpload onUpload={handleUpload} />
               )}
               {flowNodes.length > 0 && (
-                <ReactFlowProvider>
-                  <ReactFlowChart
-                    panelId={initialPanelId || ""}
-                    initialNodes={flowNodes}
-                    initialEdges={flowEdges}
-                    onNodeSelect={handleNodeSelect}
-                  />
-                </ReactFlowProvider>
+                <div id="interactiveGraph">
+                  <ReactFlowProvider>
+                    <ReactFlowChart
+                      panelId={initialPanelId || ""}
+                      initialNodes={flowNodes}
+                      initialEdges={flowEdges}
+                      onNodeSelect={handleNodeSelect}
+                    />
+                  </ReactFlowProvider>
+                </div>
               )}
             </div>
           )}
-          { metaData.length > 0 && (
-
+          {metaData.length > 0 && (
             <div
-            className={styles.rightPanel}
-            style={{ width: showProcessOverview ? "70%" : "100%" }}
+              className={styles.rightPanel}
+              style={{ width: showProcessOverview ? "70%" : "100%" }}
             >
-            {analysisInstances.map((panelId) => (
-              <div
-                key={panelId}
-                className={styles.rightPanelElement}
-                style={{
-                  maxWidth: analysisInstances.length > 1 ? "850px" : "none",
-                }}
-              >
-                <AnalysisPanel
-                  panelId={panelId}
-                  initialDropdownOptions={dropdownOptions}
-                  setIsLoading={setIsLoading}
-                  nodeSelectData={
-                    panelId === initialPanelId ? nodeSelectData : null
-                  }
-                  setNodeSelectData={setNodeSelectData}
-                  initialPanelId={initialPanelId}
-                />
-              </div>
-            ))}
+              {analysisInstances.map((panelId) => (
+                <div
+                  key={panelId}
+                  className={styles.rightPanelElement}
+                  style={{
+                    maxWidth: analysisInstances.length > 1 ? "850px" : "none",
+                  }}
+                >
+                  <AnalysisPanel
+                    setAnalysisSelected={setAnalysisSelected}
+                    setAnalysisPanelControl={setAnalysisPanelControl}
+                    panelId={panelId}
+                    initialDropdownOptions={dropdownOptions}
+                    setIsLoading={setIsLoading}
+                    nodeSelectData={
+                      panelId === initialPanelId ? nodeSelectData : null
+                    }
+                    setNodeSelectData={setNodeSelectData}
+                    initialPanelId={initialPanelId}
+                  />
+                </div>
+              ))}
             </div>
           )}
-
         </div>
       </div>
+
+      <button
+        onClick={() => setRunOnboardingTutorial(true)}
+        className={`btn btn-primary btn-sm`}
+        style={{position: "fixed", bottom: "20px", right: "20px"}}
+      >
+        <i className="bi bi-info-square"></i>
+      </button>
 
       {isLoading && <Loader />}
     </>

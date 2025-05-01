@@ -24,6 +24,7 @@ interface AnalysisDropdownContentProps {
   data: AnalysisData | null;
   setData: (data: AnalysisData | null) => void;
   nodeSelectData?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  setAnalysisPanelControl: (analysisPanelControl: boolean) => void;
 }
 
 const AnalysisDropdownContent = ({
@@ -41,6 +42,7 @@ const AnalysisDropdownContent = ({
   data,
   setData,
   nodeSelectData,
+  setAnalysisPanelControl,
 }: AnalysisDropdownContentProps) => {
 
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -129,7 +131,6 @@ const AnalysisDropdownContent = ({
     : [];
 
   const handlePlotClick = (event: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-    console.log("Plot clicked", event);
     if (!data?.table || !parsedPlot) return;
 
     const point = event.points[0];
@@ -166,6 +167,7 @@ const AnalysisDropdownContent = ({
           {data?.text && <p>{data.text}</p>}
           {data?.table && (
             <TableComponent
+              setAnalysisPanelControl={setAnalysisPanelControl}
               initialHeaders={initialHeaders}
               selectedHeaders={selectedHeaders}
               showColumnSelector={showColumnSelector}
@@ -189,7 +191,7 @@ const AnalysisDropdownContent = ({
               setSelectionSource={setSelectionSource}
             />
           )}
-          {parsedPlot && (
+          {data?.plot && parsedPlot && (
             <Plot
               data={parsedPlot.data.map((trace: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
                 if (selectedRow && trace.y && trace.y.length > 0) {
@@ -232,7 +234,7 @@ const AnalysisDropdownContent = ({
               onClick={handlePlotClick}
             />
           )}
-          {bigParsedPlot && (
+          {data?.big_plot && bigParsedPlot && (
             <>
               <Plot
                 data={bigParsedPlot.data}

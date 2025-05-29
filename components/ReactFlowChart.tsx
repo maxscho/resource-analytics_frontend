@@ -57,7 +57,7 @@ const ReactFlowChart = ({
 }: ReactFlowChartProps) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const [hoverDetails, setHoverDetails] = useState<Record<string, any>>({});
+  const [hoverDetails, setHoverDetails] = useState<Record<string, any>>({}); // eslint-disable-line @typescript-eslint/no-explicit-any
   const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null);
 
   const handleInit = (instance: ReactFlowInstance) => {

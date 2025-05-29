@@ -26,6 +26,7 @@ interface TableComponentProps {
   setSelectionSource: React.Dispatch<
     React.SetStateAction<"plot" | "table" | null>
   >;
+  setAnalysisPanelControl: (analysisPanelControl: boolean) => void;
 }
 
 const TableComponent: React.FC<TableComponentProps> = ({
@@ -50,6 +51,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
   selectedRow,
   selectionSource,
   setSelectionSource,
+  setAnalysisPanelControl,
 }) => {
   const [numericColumns, setNumericColumns] = useState<string[]>([]);
   const [filters, setFilters] = useState<{
@@ -171,6 +173,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
       {showFilterSelector ? (
         // either show the table filter or table controls
         <TableFilter
+          setAnalysisPanelControl={setAnalysisPanelControl}
           numericColumns={numericColumns}
           onFiltersChange={handleFiltersChange}
           searchQuery={searchQuery}
@@ -182,7 +185,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
           setShowColumnSelector={setShowColumnSelector}
         />
       ) : (
-        <div className={styles.tableControlsPanel}>
+        <div id="tableControlsPanel" className={styles.tableControlsPanel}>
           <div className={styles.columnSelectorBar}>
             <button
               id="selectionButton"
@@ -221,6 +224,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
             onClick={() => {
               setShowFilterSelector(!showFilterSelector);
               setShowColumnSelector(false);
+              setAnalysisPanelControl(false);
             }}
           >
             <span>Table Filter</span>
@@ -232,6 +236,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
           </button>
 
           <button
+            id="resetSelectedRowButton"
             className="btn btn-primary"
             style={{ marginLeft: "15px" }}
             onClick={() => {
@@ -280,6 +285,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
         </div>
       )}
       <table
+        id="analysisTable"
         style={{
           width: "100%",
           borderCollapse: "collapse",

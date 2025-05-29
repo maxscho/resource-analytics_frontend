@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactFlow, {
   Controls,
   MiniMap,
-  MarkerType
+  MarkerType,
+  ReactFlowInstance
 } from "reactflow";
 import { Node, Edge } from "reactflow";
 import "reactflow/dist/style.css";
@@ -13,7 +14,7 @@ import FlowChartTooltip from "./FlowChartTooltip";
 
 const nodeTypes = {
   tooltipNode: FlowChartTooltip
-}
+};
 
 const edgeTypes = {
   custom: CustomEdge,
@@ -30,7 +31,7 @@ function transformBackendData(dfg: { nodes: Node[]; edges: Edge[] }) {
   const nodes = dfg.nodes.map((n) => ({
     id: n.id,
     data: { label: n.data.label },
-    type: 'tooltipNode',
+    type: "tooltipNode",
     position: { x: 0, y: 0 },
   }));
 
@@ -38,7 +39,7 @@ function transformBackendData(dfg: { nodes: Node[]; edges: Edge[] }) {
     id: e.id,
     source: e.source,
     target: e.target,
-    type: 'custom', // set the edge type to "custom", otherwise CustomEdge will not be applied
+    type: "custom",
     data: { label: e.label },
     markerEnd: {
       type: MarkerType.ArrowClosed,
@@ -57,6 +58,11 @@ const ReactFlowChart = ({
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [hoverDetails, setHoverDetails] = useState<Record<string, any>>({}); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null);
+
+  const handleInit = (instance: ReactFlowInstance) => {
+    reactFlowInstanceRef.current = instance;
+  };
 
   useEffect(() => {
     async function fetchHoverDetails() {
@@ -69,13 +75,12 @@ const ReactFlowChart = ({
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              panel_id: panelId, // Assuming analysisInstances[0] corresponds to initialNodes[0]?.id
+              panel_id: panelId,
             }),
           });
 
           const hoverData = await postResult.json();
           setHoverDetails(hoverData);
-          console.log("node hover detail", hoverData);
         } catch (error) {
           console.error("Error fetching node hover detail:", error);
         }
@@ -91,12 +96,25 @@ const ReactFlowChart = ({
         nodes: initialNodes,
         edges: initialEdges,
       });
+
       const { nodes: layoutedNodes, edges: layoutedEdges } = await layoutWithElk(
         rawNodes,
         rawEdges
       );
+
       setNodes(layoutedNodes);
       setEdges(layoutedEdges);
+
+      // Delay viewport adjustment slightly to ensure layout is rendered
+      setTimeout(() => {
+        const instance = reactFlowInstanceRef.current;
+        if (instance) {
+          instance.fitView({ padding: 0.1 });
+          const bounds = instance.getViewport();
+          // Reset Y to top
+          instance.setViewport({ x: bounds.x, y: 0, zoom: bounds.zoom }, { duration: 500 });
+        }
+      }, 300);
     }
 
     load();
@@ -106,7 +124,6 @@ const ReactFlowChart = ({
     onNodeSelect(node);
   };
 
-  // Merge hoverDetails into each node's data
   const nodesWithHoverDetails = nodes.map((node) => ({
     ...node,
     data: {
@@ -121,13 +138,14 @@ const ReactFlowChart = ({
         <ReactFlow
           nodes={nodesWithHoverDetails}
           edges={edges}
+          onInit={handleInit}
           fitView
           onNodeClick={handleNodeClick}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
         >
           <Controls />
-          <MiniMap pannable zoomable />
+          <MiniMap style={{ height: "50", width: "50" }} pannable zoomable />
         </ReactFlow>
       )}
     </div>

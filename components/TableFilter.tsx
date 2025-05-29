@@ -14,6 +14,7 @@ interface TableFilterProps {
   showFilterSelector: boolean;
   setShowFilterSelector: (show: boolean) => void;
   setShowColumnSelector: (show: boolean) => void;
+  setAnalysisPanelControl: (analysisPanelControl: boolean) => void;
 }
 
 const TableFilter = ({
@@ -26,6 +27,7 @@ const TableFilter = ({
   showFilterSelector,
   setShowFilterSelector,
   setShowColumnSelector,
+  setAnalysisPanelControl,
 }: TableFilterProps) => {
   const handleSearchQueryChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -60,7 +62,7 @@ const TableFilter = ({
       }}
     >
       <div className={styles.filterHeader}>
-        <div className={styles.searchBar}>
+        <div id="searchTableString" className={styles.searchBar}>
           <input
             type="text"
             id="searchQuery"
@@ -87,6 +89,7 @@ const TableFilter = ({
           onClick={() => {
             setShowFilterSelector(!showFilterSelector);
             setShowColumnSelector(false);
+            setAnalysisPanelControl(true);
           }}
         >
           <span>Table Filter</span>

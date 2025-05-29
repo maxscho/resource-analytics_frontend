@@ -17,7 +17,7 @@ export default function FileUpload({ onUpload }: FileUploadProps) {
   };
 
   return (
-    <div className={`${styles.rounded} ${styles.fileUpload}`}>
+    <div id="uploadEventLogButton" className={`${styles.rounded} ${styles.fileUpload}`}>
       <p>Upload an event log</p>
       <div className="d-flex justify-content-between align-items-center w-100">
         <div className="d-flex align-items-center">

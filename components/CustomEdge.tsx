@@ -12,7 +12,7 @@ const CustomEdge = ({
   data,
 }: EdgeProps) => {
   // Get the bezier path and control points
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath] = getBezierPath({
     sourceX,
     sourceY,
     sourcePosition,
@@ -20,11 +20,6 @@ const CustomEdge = ({
     targetY,
     targetPosition,
   });
-
-  // Calculate control points for cubic Bezier
-  const cX = sourceX + (targetX - sourceX) * 0.5;
-  const cY1 = sourceY;
-  const cY2 = targetY;
 
   // For straight lines, use the direct vector; for curves, use the tangent at t=1
   let dx, dy;
@@ -40,9 +35,6 @@ const CustomEdge = ({
     dy = targetY - c2y;
   }
   const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-
-  // Arrowhead size
-  const arrowSize = 10;
 
   // Arrowhead position: at the end of the edge
   const arrowX = targetX;

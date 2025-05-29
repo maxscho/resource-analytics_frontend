@@ -66,7 +66,8 @@ const ReactFlowChart = ({
 
   useEffect(() => {
     async function fetchHoverDetails() {
-      if (initialNodes.length > 0) {
+      if (initialNodes.length > 0 && panelId) {
+        console.log("Initial nodes", initialNodes);
         try {
           const postResult = await fetch("http://localhost:9090/node_hover_detail", {
             method: "POST",
@@ -88,7 +89,7 @@ const ReactFlowChart = ({
     }
 
     fetchHoverDetails();
-  }, [initialNodes]);
+  }, [initialNodes, panelId]);
 
   useEffect(() => {
     async function load() {

@@ -220,11 +220,11 @@ export default function Home() {
               ) : (
                 <FileUpload onUpload={handleUpload} />
               )}
-              {flowNodes.length > 0 && (
+              {flowNodes.length > 0 && initialPanelId && (
                 <div id="interactiveGraph">
                   <ReactFlowProvider>
                     <ReactFlowChart
-                      panelId={initialPanelId || ""}
+                      panelId={initialPanelId}
                       initialNodes={flowNodes}
                       initialEdges={flowEdges}
                       onNodeSelect={handleNodeSelect}

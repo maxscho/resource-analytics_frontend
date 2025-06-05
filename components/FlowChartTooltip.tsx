@@ -9,13 +9,13 @@ interface TooltipProps extends NodeProps {
 const FlowChartTooltip = memo(({ data }: TooltipProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
-  const [tooltipPos, setTooltipPos] = useState<{top: number, left: number}>({top: 0, left: 0});
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
   const handleMouseEnter = () => {
     if (nodeRef.current) {
       const rect = nodeRef.current.getBoundingClientRect();
       setTooltipPos({
-        top: rect.top + window.scrollY - 10, // 10px above the node
+        top: rect.top + window.scrollY - 10,
         left: rect.left + window.scrollX + rect.width / 2,
       });
     }
@@ -24,17 +24,86 @@ const FlowChartTooltip = memo(({ data }: TooltipProps) => {
 
   const handleMouseLeave = () => setShowTooltip(false);
 
+  // Only use handles that are actually used
+  const usedHandles: string[] = data?.usedHandles || [];
+
+  // Group handles by side
+  const topHandles = usedHandles.filter((h) => h.startsWith("top"));
+  const bottomHandles = usedHandles.filter((h) => h.startsWith("bottom"));
+
   return (
     <div
       ref={nodeRef}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className="react-flow__node-default"
-      style={{ position: "relative" }}
+      style={{
+        position: "relative",
+        backgroundColor: "#00BCD4",
+        color: "white",
+        border: "1px solid black",
+        borderRadius: "2px",
+        padding: "10px",
+        fontWeight: 500,
+        textAlign: "center",
+        minWidth: 180,
+      }}
     >
-      <Handle type="target" position={Position.Top} />
+      {/* Render only used top handles, distributed */}
+      {topHandles.map((handleId, i) => (
+        <Handle
+          key={handleId}
+          type="source"
+          position={Position.Top}
+          id={handleId}
+          style={{
+            background: "#000",
+            left: `calc(${((i + 1) / (topHandles.length + 1)) * 100}% - 8px)`,
+          }}
+        />
+      ))}
+      {topHandles.map((handleId, i) => (
+        <Handle
+          key={handleId + "-target"}
+          type="target"
+          position={Position.Top}
+          id={handleId}
+          style={{
+            background: "#000",
+            left: `calc(${((i + 1) / (topHandles.length + 1)) * 100}% - 8px)`,
+          }}
+        />
+      ))}
+      {/* Render only used bottom handles, distributed */}
+      {bottomHandles.map((handleId, i) => (
+        <Handle
+          key={handleId}
+          type="source"
+          position={Position.Bottom}
+          id={handleId}
+          style={{
+            background: "#000",
+            left: `calc(${((i + 1) / (bottomHandles.length + 1)) * 100}% - 8px)`,
+          }}
+        />
+      ))}
+      {bottomHandles.map((handleId, i) => (
+        <Handle
+          key={handleId + "-target"}
+          type="target"
+          position={Position.Bottom}
+          id={handleId}
+          style={{
+            background: "#000",
+            left: `calc(${((i + 1) / (bottomHandles.length + 1)) * 100}% - 8px)`,
+          }}
+        />
+      ))}
+
+      {/* Node label */}
       {data?.label || "No Label"}
 
+      {/* Tooltip rendering */}
       {showTooltip &&
         createPortal(
           <div
@@ -53,7 +122,7 @@ const FlowChartTooltip = memo(({ data }: TooltipProps) => {
               zIndex: 99999,
               minWidth: "150px",
               maxWidth: "300px",
-              pointerEvents: "none"
+              pointerEvents: "none",
             }}
           >
             <table style={{ color: "white" }}>
@@ -66,7 +135,9 @@ const FlowChartTooltip = memo(({ data }: TooltipProps) => {
                   { label: "Avg. Duration", value: data?.average_duration ?? "N/A" },
                 ].map((row) => (
                   <tr key={row.label}>
-                    <td><strong>{row.label}</strong></td>
+                    <td>
+                      <strong>{row.label}</strong>
+                    </td>
                     <td>{row.value}</td>
                   </tr>
                 ))}
@@ -74,14 +145,11 @@ const FlowChartTooltip = memo(({ data }: TooltipProps) => {
             </table>
           </div>,
           document.body
-        )
-      }
-
-      <Handle type="source" position={Position.Bottom} />
+        )}
     </div>
   );
 });
 
-FlowChartTooltip.displayName = 'FlowChartTooltip';
+FlowChartTooltip.displayName = "FlowChartTooltip";
 
 export default FlowChartTooltip;

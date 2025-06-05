@@ -3,7 +3,7 @@ import ReactFlow, {
   Controls,
   MiniMap,
   MarkerType,
-  ReactFlowInstance
+  ReactFlowInstance,
 } from "reactflow";
 import { Node, Edge } from "reactflow";
 import "reactflow/dist/style.css";
@@ -13,7 +13,7 @@ import CustomEdge from "./CustomEdge";
 import FlowChartTooltip from "./FlowChartTooltip";
 
 const nodeTypes = {
-  tooltipNode: FlowChartTooltip
+  tooltipNode: FlowChartTooltip,
 };
 
 const edgeTypes = {
@@ -35,18 +35,69 @@ function transformBackendData(dfg: { nodes: Node[]; edges: Edge[] }) {
     position: { x: 0, y: 0 },
   }));
 
-  const edges = dfg.edges.map((e) => ({
-    id: e.id,
-    source: e.source,
-    target: e.target,
-    type: "custom",
-    data: { label: e.label },
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-    },
-  }));
+  const edges = dfg.edges.map((e) => {
+    const sourceNode = dfg.nodes.find((n) => n.id === e.source);
+    const targetNode = dfg.nodes.find((n) => n.id === e.target);
+
+    const sourceY = sourceNode?.position?.y ?? 0;
+    const targetY = targetNode?.position?.y ?? 0;
+
+    let sourceHandle = "bottom";
+    let targetHandle = "top";
+
+    if (sourceY > targetY) {
+      // upward edge
+      sourceHandle = "top";
+      targetHandle = "bottom";
+    }
+
+    return {
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      type: "custom",
+      data: { label: e.label },
+      sourceHandle,
+      targetHandle,
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+      },
+    };
+  });
 
   return { nodes, edges };
+}
+
+function assignUniqueHandles(edges: Edge[]) {
+  // Track used handles for each node
+  const handlePositions = ["top", "bottom", "left", "right"];
+  const nodeHandleCount: Record<string, number> = {};
+
+  return edges.map((edge) => {
+    // For source
+    nodeHandleCount[edge.source] = (nodeHandleCount[edge.source] || 0) + 1;
+    const sourceHandle =
+      handlePositions[
+        (nodeHandleCount[edge.source] - 1) % handlePositions.length
+      ] +
+      "-" +
+      nodeHandleCount[edge.source];
+
+    // For target
+    nodeHandleCount[edge.target] = (nodeHandleCount[edge.target] || 0) + 1;
+    const targetHandle =
+      handlePositions[
+        (nodeHandleCount[edge.target] - 1) % handlePositions.length
+      ] +
+      "-" +
+      nodeHandleCount[edge.target];
+
+    return {
+      ...edge,
+      sourceHandle,
+      targetHandle,
+    };
+  });
 }
 
 const ReactFlowChart = ({
@@ -69,16 +120,19 @@ const ReactFlowChart = ({
       if (initialNodes.length > 0 && panelId) {
         console.log("Initial nodes", initialNodes);
         try {
-          const postResult = await fetch("http://localhost:9090/node_hover_detail", {
-            method: "POST",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              panel_id: panelId,
-            }),
-          });
+          const postResult = await fetch(
+            "http://localhost:9090/node_hover_detail",
+            {
+              method: "POST",
+              credentials: "include",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                panel_id: panelId,
+              }),
+            }
+          );
 
           const hoverData = await postResult.json();
           setHoverDetails(hoverData);
@@ -93,27 +147,107 @@ const ReactFlowChart = ({
 
   useEffect(() => {
     async function load() {
-      const { nodes: rawNodes, edges: rawEdges } = transformBackendData({
+      const raw = transformBackendData({
         nodes: initialNodes,
         edges: initialEdges,
       });
 
-      const { nodes: layoutedNodes, edges: layoutedEdges } = await layoutWithElk(
-        rawNodes,
-        rawEdges
-      );
+      // Layout with ELK
+      const { nodes: layoutedNodes, edges: layoutedEdges } =
+        await layoutWithElk(raw.nodes, raw.edges);
 
-      setNodes(layoutedNodes);
-      setEdges(layoutedEdges);
+      // Use positions to assign handle directions
+      const nodeMap = Object.fromEntries(layoutedNodes.map((n) => [n.id, n]));
 
-      // Delay viewport adjustment slightly to ensure layout is rendered
+      // First, assign direction (top/bottom/left/right) based on position
+      const edgesWithDirections = layoutedEdges.map((e) => {
+        const sourceNode = nodeMap[e.source];
+        const targetNode = nodeMap[e.target];
+
+        let sourceHandle = "bottom";
+        let targetHandle = "top";
+
+        if (
+          sourceNode &&
+          targetNode &&
+          sourceNode.position.y > targetNode.position.y
+        ) {
+          // This is an upward edge
+          sourceHandle = "top";
+          targetHandle = "bottom";
+        }
+
+        return {
+          ...e,
+          sourceHandle,
+          targetHandle,
+        };
+      });
+
+      // Then, make handles unique per node/side, but keep the direction info
+      function assignUniqueHandlesBySide(edges: Edge[]) {
+        // Track used handles for each node and side
+        const handleCount: Record<string, Record<string, number>> = {};
+
+        return edges.map((edge) => {
+          // Source
+          const srcSide = edge.sourceHandle || "bottom";
+          handleCount[edge.source] = handleCount[edge.source] || {};
+          handleCount[edge.source][srcSide] =
+            (handleCount[edge.source][srcSide] || 0) + 1;
+          const sourceHandle = `${srcSide}-${
+            handleCount[edge.source][srcSide]
+          }`;
+
+          // Target
+          const tgtSide = edge.targetHandle || "top";
+          handleCount[edge.target] = handleCount[edge.target] || {};
+          handleCount[edge.target][tgtSide] =
+            (handleCount[edge.target][tgtSide] || 0) + 1;
+          const targetHandle = `${tgtSide}-${
+            handleCount[edge.target][tgtSide]
+          }`;
+
+          return {
+            ...edge,
+            sourceHandle,
+            targetHandle,
+          };
+        });
+      }
+
+      const updatedEdges = assignUniqueHandlesBySide(edgesWithDirections);
+
+      const nodeHandlesMap: Record<string, Set<string>> = {};
+      updatedEdges.forEach((edge) => {
+        if (!nodeHandlesMap[edge.source]) nodeHandlesMap[edge.source] = new Set();
+        if (!nodeHandlesMap[edge.target]) nodeHandlesMap[edge.target] = new Set();
+        nodeHandlesMap[edge.source].add(edge.sourceHandle);
+        nodeHandlesMap[edge.target].add(edge.targetHandle);
+      });
+
+      const nodesWithHandles = layoutedNodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          usedHandles: nodeHandlesMap[node.id]
+            ? Array.from(nodeHandlesMap[node.id])
+            : [],
+        },
+      }));
+
+      setNodes(nodesWithHandles);
+      setEdges(updatedEdges);
+
       setTimeout(() => {
         const instance = reactFlowInstanceRef.current;
         if (instance) {
           instance.fitView({ padding: 0.1 });
           const bounds = instance.getViewport();
-          // Reset Y to top
-          instance.setViewport({ x: bounds.x, y: 0, zoom: bounds.zoom }, { duration: 500 });
+          instance.setViewport(
+            { x: bounds.x, y: 0, zoom: bounds.zoom },
+            { duration: 500 }
+          );
         }
       }, 300);
     }

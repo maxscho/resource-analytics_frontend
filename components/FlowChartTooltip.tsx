@@ -9,7 +9,10 @@ interface TooltipProps extends NodeProps {
 const FlowChartTooltip = memo(({ data }: TooltipProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
-  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number }>({
+    top: 0,
+    left: 0,
+  });
 
   const handleMouseEnter = () => {
     if (nodeRef.current) {
@@ -31,6 +34,11 @@ const FlowChartTooltip = memo(({ data }: TooltipProps) => {
   const topHandles = usedHandles.filter((h) => h.startsWith("top"));
   const bottomHandles = usedHandles.filter((h) => h.startsWith("bottom"));
 
+  const utilization = typeof data.utilization === "number" ? data.utilization : null;
+  const nodeBg = utilization !== null
+    ? `linear-gradient(to right, #e74c3c ${utilization}%, #fff ${utilization}%)`
+    : (data.color || "#00BCD4");
+
   return (
     <div
       ref={nodeRef}
@@ -39,8 +47,8 @@ const FlowChartTooltip = memo(({ data }: TooltipProps) => {
       className="react-flow__node-default"
       style={{
         position: "relative",
-        backgroundColor: "#00BCD4",
-        color: "white",
+        background: nodeBg,
+        color: "black",
         border: "1px solid black",
         borderRadius: "2px",
         padding: "10px",
@@ -83,7 +91,9 @@ const FlowChartTooltip = memo(({ data }: TooltipProps) => {
           id={handleId}
           style={{
             background: "#000",
-            left: `calc(${((i + 1) / (bottomHandles.length + 1)) * 100}% - 8px)`,
+            left: `calc(${
+              ((i + 1) / (bottomHandles.length + 1)) * 100
+            }% - 8px)`,
           }}
         />
       ))}
@@ -95,7 +105,9 @@ const FlowChartTooltip = memo(({ data }: TooltipProps) => {
           id={handleId}
           style={{
             background: "#000",
-            left: `calc(${((i + 1) / (bottomHandles.length + 1)) * 100}% - 8px)`,
+            left: `calc(${
+              ((i + 1) / (bottomHandles.length + 1)) * 100
+            }% - 8px)`,
           }}
         />
       ))}
@@ -130,9 +142,18 @@ const FlowChartTooltip = memo(({ data }: TooltipProps) => {
                 {[
                   { label: "Case Count", value: data?.case_count ?? "N/A" },
                   { label: "Unique Cases", value: data?.unique_cases ?? "N/A" },
-                  { label: "Unique Resources", value: data?.unique_resources ?? "N/A" },
-                  { label: "Responsible Role", value: data?.responsible_role ?? "N/A" },
-                  { label: "Avg. Duration", value: data?.average_duration ?? "N/A" },
+                  {
+                    label: "Unique Resources",
+                    value: data?.unique_resources ?? "N/A",
+                  },
+                  {
+                    label: "Responsible Role",
+                    value: data?.responsible_role ?? "N/A",
+                  },
+                  {
+                    label: "Avg. Duration",
+                    value: data?.average_duration ?? "N/A",
+                  },
                 ].map((row) => (
                   <tr key={row.label}>
                     <td>

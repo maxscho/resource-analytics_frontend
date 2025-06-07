@@ -25,6 +25,9 @@ interface ReactFlowChartProps {
   initialEdges: Edge[];
   onNodeSelect: (node: Node) => void;
   panelId: string;
+  selectedAnalysis: string;
+  colorMappings: Record<string, Record<string, string>>;
+  activityUtilization: Record<string, number>;
 }
 
 function transformBackendData(dfg: { nodes: Node[]; edges: Edge[] }) {
@@ -68,36 +71,15 @@ function transformBackendData(dfg: { nodes: Node[]; edges: Edge[] }) {
   return { nodes, edges };
 }
 
-function assignUniqueHandles(edges: Edge[]) {
-  // Track used handles for each node
-  const handlePositions = ["top", "bottom", "left", "right"];
-  const nodeHandleCount: Record<string, number> = {};
-
-  return edges.map((edge) => {
-    // For source
-    nodeHandleCount[edge.source] = (nodeHandleCount[edge.source] || 0) + 1;
-    const sourceHandle =
-      handlePositions[
-        (nodeHandleCount[edge.source] - 1) % handlePositions.length
-      ] +
-      "-" +
-      nodeHandleCount[edge.source];
-
-    // For target
-    nodeHandleCount[edge.target] = (nodeHandleCount[edge.target] || 0) + 1;
-    const targetHandle =
-      handlePositions[
-        (nodeHandleCount[edge.target] - 1) % handlePositions.length
-      ] +
-      "-" +
-      nodeHandleCount[edge.target];
-
-    return {
-      ...edge,
-      sourceHandle,
-      targetHandle,
-    };
-  });
+// Utility: map 0-100 utilization to white→red
+function utilizationToColor(utilization: number) {
+  // Clamp between 0 and 100
+  const percent = Math.max(0, Math.min(100, utilization));
+  // Interpolate between white (255,255,255) and red (255,0,0)
+  const r = 255;
+  const g = Math.round(255 - (255 * percent) / 100);
+  const b = Math.round(255 - (255 * percent) / 100);
+  return `rgb(${r},${g},${b})`;
 }
 
 const ReactFlowChart = ({
@@ -105,11 +87,15 @@ const ReactFlowChart = ({
   initialEdges,
   onNodeSelect,
   panelId,
+  selectedAnalysis,
+  colorMappings,
+  activityUtilization,
 }: ReactFlowChartProps) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [hoverDetails, setHoverDetails] = useState<Record<string, any>>({}); // eslint-disable-line @typescript-eslint/no-explicit-any
   const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null);
+  const lastNonDetailAnalysis = useRef<string | null>(null);
 
   const handleInit = (instance: ReactFlowInstance) => {
     reactFlowInstanceRef.current = instance;
@@ -118,7 +104,6 @@ const ReactFlowChart = ({
   useEffect(() => {
     async function fetchHoverDetails() {
       if (initialNodes.length > 0 && panelId) {
-        console.log("Initial nodes", initialNodes);
         try {
           const postResult = await fetch(
             "http://localhost:9090/node_hover_detail",
@@ -220,8 +205,10 @@ const ReactFlowChart = ({
 
       const nodeHandlesMap: Record<string, Set<string>> = {};
       updatedEdges.forEach((edge) => {
-        if (!nodeHandlesMap[edge.source]) nodeHandlesMap[edge.source] = new Set();
-        if (!nodeHandlesMap[edge.target]) nodeHandlesMap[edge.target] = new Set();
+        if (!nodeHandlesMap[edge.source])
+          nodeHandlesMap[edge.source] = new Set();
+        if (!nodeHandlesMap[edge.target])
+          nodeHandlesMap[edge.target] = new Set();
         nodeHandlesMap[edge.source].add(edge.sourceHandle);
         nodeHandlesMap[edge.target].add(edge.targetHandle);
       });
@@ -259,13 +246,49 @@ const ReactFlowChart = ({
     onNodeSelect(node);
   };
 
-  const nodesWithHoverDetails = nodes.map((node) => ({
-    ...node,
-    data: {
-      ...node.data,
-      ...(hoverDetails[node.id] ? hoverDetails[node.id] : {}),
-    },
-  }));
+  useEffect(() => {
+    if (
+      selectedAnalysis !== "analysis_detail" &&
+      selectedAnalysis !== "" &&
+      selectedAnalysis !== null
+    ) {
+      lastNonDetailAnalysis.current = selectedAnalysis;
+    }
+  }, [selectedAnalysis]);
+
+  const colorKey =
+    selectedAnalysis === "analysis_detail" && lastNonDetailAnalysis.current
+      ? lastNonDetailAnalysis.current
+      : selectedAnalysis;
+
+  const nodesWithHoverDetails = nodes.map((node) => {
+    let color = "#fff"; // default white
+    let utilization = null;
+    if (
+      (colorKey === "capacity_utilization_resource" ||
+        colorKey === "capacity_utilization_role" ||
+        colorKey === "capacity_utilization_activity") &&
+      activityUtilization &&
+      node.data?.label
+    ) {
+      const util = activityUtilization[node.data.label];
+      if (typeof util === "number") {
+        utilization = util;
+        color = utilizationToColor(util);
+      }
+    } else {
+      color = colorMappings[colorKey]?.[node.data.label] || "#3498db";
+    }
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        ...(hoverDetails[node.id] ? hoverDetails[node.id] : {}),
+        color,
+        utilization, // Pass utilization to node
+      },
+    };
+  });
 
   return (
     <div style={{ width: "100%", height: "70vh" }}>

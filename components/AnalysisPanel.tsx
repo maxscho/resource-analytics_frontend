@@ -19,6 +19,8 @@ interface AnalysisPanelProps {
   setIsLoading: (isLoading: boolean) => void;
   setAnalysisSelected: (analysisSelected: boolean) => void;
   setAnalysisPanelControl: (analysisPanelControl: boolean) => void;
+  selectedAnalysis: string;
+  setSelectedAnalysis: (analysis: string) => void;
 }
 
 export default function AnalysisPanel({
@@ -30,9 +32,11 @@ export default function AnalysisPanel({
   setIsLoading,
   setAnalysisSelected,
   setAnalysisPanelControl,
+  selectedAnalysis,
+  setSelectedAnalysis,
 }: AnalysisPanelProps) {
   const [dropdownOptions] = useState(initialDropdownOptions);
-  const [selectedAnalysis, setSelectedAnalysis] = useState<string>("");
+  
   const [showColumnSelector, setShowColumnSelector] = useState<boolean>(false);
   const [showFilterSelector, setShowFilterSelector] = useState<boolean>(false);
   const [data, setData] = useState<AnalysisData | null>(null);

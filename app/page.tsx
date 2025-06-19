@@ -40,22 +40,30 @@ export default function Home() {
   const [eventlogUploaded, setEventlogUploaded] = useState(false);
   const [analysisSelected, setAnalysisSelected] = useState(false);
   const [analysisPanelControl, setAnalysisPanelControl] = useState(true);
-  const [selectedAnalysis, setSelectedAnalysis] = useState<string>("");
+  const [firstSelectedAnalysis, setFirstSelectedAnalysis] =
+    useState<string>("");
 
-  const [colorMappings, setColorMappings] = useState<Record<string, Record<string, string>>>({});
-  const [activityUtilization, setActivityUtilization] = useState<Record<string, number>>({});
+  const [colorMappings, setColorMappings] = useState<
+    Record<string, Record<string, string>>
+  >({});
+  const [activityUtilization, setActivityUtilization] = useState<
+    Record<string, number>
+  >({});
 
   useEffect(() => {
     console.log("Fetching color scheme for duration_per_role");
     const fetchColorScheme = async () => {
       if (eventlogUploaded) {
-        const response = await fetch(`http://localhost:9090/dfg_color_scheme?panel_id=${initialPanelId}`, {
-          method: "GET",
-          credentials: "include"
-        });
-        if (response.ok){
+        const response = await fetch(
+          `http://localhost:9090/dfg_color_scheme?panel_id=${initialPanelId}`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
           const data = await response.json();
-          
+
           /*setColorMappings(prev => ({
             ...prev,
             "duration_per_role": data.colors
@@ -67,16 +75,19 @@ export default function Home() {
 
     const fetchActivityUtilization = async () => {
       if (eventlogUploaded) {
-        const response = await fetch(`http://localhost:9090/dfg_node_utilization?panel_id=${initialPanelId}`, {
-          method: "GET",
-          credentials: "include"
-        });
+        const response = await fetch(
+          `http://localhost:9090/dfg_node_utilization?panel_id=${initialPanelId}`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
         if (response.ok) {
           const data = await response.json();
           setActivityUtilization(data.utilization);
         }
       }
-    }
+    };
 
     fetchColorScheme();
     fetchActivityUtilization();
@@ -268,7 +279,7 @@ export default function Home() {
                       initialNodes={flowNodes}
                       initialEdges={flowEdges}
                       onNodeSelect={handleNodeSelect}
-                      selectedAnalysis={selectedAnalysis}
+                      selectedAnalysis={firstSelectedAnalysis}
                       colorMappings={colorMappings}
                       activityUtilization={activityUtilization}
                     />
@@ -282,7 +293,7 @@ export default function Home() {
               className={styles.rightPanel}
               style={{ width: showProcessOverview ? "70%" : "100%" }}
             >
-              {analysisInstances.map((panelId) => (
+              {analysisInstances.map((panelId, idx) => (
                 <div
                   key={panelId}
                   className={styles.rightPanelElement}
@@ -291,8 +302,13 @@ export default function Home() {
                   }}
                 >
                   <AnalysisPanel
-                    selectedAnalysis={selectedAnalysis}
-                    setSelectedAnalysis={setSelectedAnalysis}
+                    // Only the first panel is controlled
+                    {...(idx === 0
+                      ? {
+                          selectedAnalysis: firstSelectedAnalysis,
+                          setSelectedAnalysis: setFirstSelectedAnalysis,
+                        }
+                      : {})}
                     setAnalysisSelected={setAnalysisSelected}
                     setAnalysisPanelControl={setAnalysisPanelControl}
                     panelId={panelId}
@@ -314,7 +330,7 @@ export default function Home() {
       <button
         onClick={() => setRunOnboardingTutorial(true)}
         className={`btn btn-primary btn-sm`}
-        style={{position: "fixed", bottom: "20px", right: "20px"}}
+        style={{ position: "fixed", bottom: "20px", right: "20px" }}
       >
         <i className="bi bi-info-square"></i>
       </button>

@@ -28,8 +28,13 @@ export async function layoutWithElk(
     layoutOptions: {
       'elk.algorithm': 'org.eclipse.elk.layered',
       'elk.direction': direction,
-      'elk.spacing.nodeNode': '30',
-      'elk.layered.spacing.nodeNodeBetweenLayers': '50',
+      'elk.spacing.nodeNode': '40', // More space between nodes
+      'elk.layered.spacing.nodeNodeBetweenLayers': '80', // More space between layers
+      'elk.layered.edgeRouting': 'ORTHOGONAL', // Orthogonal routing for node avoidance
+      'elk.spacing.edgeNode': '80', // More space between edges and nodes
+      'elk.layered.crossingMinimization.semiInteractive': 'true', // Try to minimize crossings
+      'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF', // Can help with long edges
+      'elk.layered.nodePlacement.bk.fixedAlignment': 'BALANCED', // Balanced alignment
     },
     children: elkNodes,
     edges: elkEdges,

@@ -19,6 +19,8 @@ interface AnalysisPanelProps {
   setIsLoading: (isLoading: boolean) => void;
   setAnalysisSelected: (analysisSelected: boolean) => void;
   setAnalysisPanelControl: (analysisPanelControl: boolean) => void;
+  selectedAnalysis?: string; // made optional
+  setSelectedAnalysis?: (analysis: string) => void; // made optional
 }
 
 export default function AnalysisPanel({
@@ -30,9 +32,25 @@ export default function AnalysisPanel({
   setIsLoading,
   setAnalysisSelected,
   setAnalysisPanelControl,
+  selectedAnalysis,
+  setSelectedAnalysis,
 }: AnalysisPanelProps) {
   const [dropdownOptions] = useState(initialDropdownOptions);
-  const [selectedAnalysis, setSelectedAnalysis] = useState<string>("");
+
+  // Internal state for uncontrolled mode
+  const [internalSelectedAnalysis, setInternalSelectedAnalysis] =
+    useState<string>("");
+
+  // Use controlled or uncontrolled state
+  const analysisValue =
+    selectedAnalysis !== undefined
+      ? selectedAnalysis
+      : internalSelectedAnalysis;
+  const setAnalysisValue =
+    setSelectedAnalysis !== undefined
+      ? setSelectedAnalysis
+      : setInternalSelectedAnalysis;
+
   const [showColumnSelector, setShowColumnSelector] = useState<boolean>(false);
   const [showFilterSelector, setShowFilterSelector] = useState<boolean>(false);
   const [data, setData] = useState<AnalysisData | null>(null);
@@ -44,8 +62,8 @@ export default function AnalysisPanel({
       <AnalysisDropdown
         setAnalysisSelected={setAnalysisSelected}
         panelId={panelId}
-        selectedAnalysis={selectedAnalysis}
-        setSelectedAnalysis={setSelectedAnalysis}
+        selectedAnalysis={analysisValue}
+        setSelectedAnalysis={setAnalysisValue}
         setData={setData}
         setInitialHeaders={setInitialHeaders}
         setSelectedHeaders={setSelectedHeaders}
@@ -54,10 +72,10 @@ export default function AnalysisPanel({
         setNodeSelectData={setNodeSelectData}
         initialPanelId={initialPanelId}
       />
-      <InfoPanel selectedAnalysis={selectedAnalysis} />
+      <InfoPanel selectedAnalysis={analysisValue} />
       <AnalysisDropdownContent
         panelId={panelId}
-        selectedAnalysis={selectedAnalysis}
+        selectedAnalysis={analysisValue}
         setIsLoading={setIsLoading}
         showFilterSelector={showFilterSelector}
         setShowFilterSelector={setShowFilterSelector}

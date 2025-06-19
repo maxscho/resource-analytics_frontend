@@ -3,7 +3,7 @@ import ReactFlow, {
   Controls,
   MiniMap,
   MarkerType,
-  ReactFlowInstance
+  ReactFlowInstance,
 } from "reactflow";
 import { Node, Edge } from "reactflow";
 import "reactflow/dist/style.css";
@@ -13,7 +13,7 @@ import CustomEdge from "./CustomEdge";
 import FlowChartTooltip from "./FlowChartTooltip";
 
 const nodeTypes = {
-  tooltipNode: FlowChartTooltip
+  tooltipNode: FlowChartTooltip,
 };
 
 const edgeTypes = {
@@ -25,6 +25,9 @@ interface ReactFlowChartProps {
   initialEdges: Edge[];
   onNodeSelect: (node: Node) => void;
   panelId: string;
+  selectedAnalysis: string;
+  colorMappings: Record<string, Record<string, string>>;
+  activityUtilization: Record<string, number>;
 }
 
 function transformBackendData(dfg: { nodes: Node[]; edges: Edge[] }) {
@@ -35,18 +38,48 @@ function transformBackendData(dfg: { nodes: Node[]; edges: Edge[] }) {
     position: { x: 0, y: 0 },
   }));
 
-  const edges = dfg.edges.map((e) => ({
-    id: e.id,
-    source: e.source,
-    target: e.target,
-    type: "custom",
-    data: { label: e.label },
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-    },
-  }));
+  const edges = dfg.edges.map((e) => {
+    const sourceNode = dfg.nodes.find((n) => n.id === e.source);
+    const targetNode = dfg.nodes.find((n) => n.id === e.target);
+
+    const sourceY = sourceNode?.position?.y ?? 0;
+    const targetY = targetNode?.position?.y ?? 0;
+
+    let sourceHandle = "bottom";
+    let targetHandle = "top";
+
+    if (sourceY > targetY) {
+      // upward edge
+      sourceHandle = "top";
+      targetHandle = "bottom";
+    }
+
+    return {
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      type: "custom",
+      data: { label: e.label },
+      sourceHandle,
+      targetHandle,
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+      },
+    };
+  });
 
   return { nodes, edges };
+}
+
+// Utility: map 0-100 utilization to white→red
+function utilizationToColor(utilization: number) {
+  // Clamp between 0 and 100
+  const percent = Math.max(0, Math.min(100, utilization));
+  // Interpolate between white (255,255,255) and red (255,0,0)
+  const r = 255;
+  const g = Math.round(255 - (255 * percent) / 100);
+  const b = Math.round(255 - (255 * percent) / 100);
+  return `rgb(${r},${g},${b})`;
 }
 
 const ReactFlowChart = ({
@@ -54,11 +87,15 @@ const ReactFlowChart = ({
   initialEdges,
   onNodeSelect,
   panelId,
+  selectedAnalysis,
+  colorMappings,
+  activityUtilization,
 }: ReactFlowChartProps) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [hoverDetails, setHoverDetails] = useState<Record<string, any>>({}); // eslint-disable-line @typescript-eslint/no-explicit-any
   const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null);
+  const lastNonDetailAnalysis = useRef<string | null>(null);
 
   const handleInit = (instance: ReactFlowInstance) => {
     reactFlowInstanceRef.current = instance;
@@ -66,18 +103,21 @@ const ReactFlowChart = ({
 
   useEffect(() => {
     async function fetchHoverDetails() {
-      if (initialNodes.length > 0) {
+      if (initialNodes.length > 0 && panelId) {
         try {
-          const postResult = await fetch("http://localhost:9090/node_hover_detail", {
-            method: "POST",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              panel_id: panelId,
-            }),
-          });
+          const postResult = await fetch(
+            "http://localhost:9090/node_hover_detail",
+            {
+              method: "POST",
+              credentials: "include",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                panel_id: panelId,
+              }),
+            }
+          );
 
           const hoverData = await postResult.json();
           setHoverDetails(hoverData);
@@ -88,31 +128,113 @@ const ReactFlowChart = ({
     }
 
     fetchHoverDetails();
-  }, [initialNodes]);
+  }, [initialNodes, panelId]);
 
   useEffect(() => {
     async function load() {
-      const { nodes: rawNodes, edges: rawEdges } = transformBackendData({
+      const raw = transformBackendData({
         nodes: initialNodes,
         edges: initialEdges,
       });
 
-      const { nodes: layoutedNodes, edges: layoutedEdges } = await layoutWithElk(
-        rawNodes,
-        rawEdges
-      );
+      // Layout with ELK
+      const { nodes: layoutedNodes, edges: layoutedEdges } =
+        await layoutWithElk(raw.nodes, raw.edges);
 
-      setNodes(layoutedNodes);
-      setEdges(layoutedEdges);
+      // Use positions to assign handle directions
+      const nodeMap = Object.fromEntries(layoutedNodes.map((n) => [n.id, n]));
 
-      // Delay viewport adjustment slightly to ensure layout is rendered
+      // First, assign direction (top/bottom/left/right) based on position
+      const edgesWithDirections = layoutedEdges.map((e) => {
+        const sourceNode = nodeMap[e.source];
+        const targetNode = nodeMap[e.target];
+
+        let sourceHandle = "bottom";
+        let targetHandle = "top";
+
+        if (
+          sourceNode &&
+          targetNode &&
+          sourceNode.position.y > targetNode.position.y
+        ) {
+          // This is an upward edge
+          sourceHandle = "top";
+          targetHandle = "bottom";
+        }
+
+        return {
+          ...e,
+          sourceHandle,
+          targetHandle,
+        };
+      });
+
+      // Then, make handles unique per node/side, but keep the direction info
+      function assignUniqueHandlesBySide(edges: Edge[]) {
+        // Track used handles for each node and side
+        const handleCount: Record<string, Record<string, number>> = {};
+
+        return edges.map((edge) => {
+          // Source
+          const srcSide = edge.sourceHandle || "bottom";
+          handleCount[edge.source] = handleCount[edge.source] || {};
+          handleCount[edge.source][srcSide] =
+            (handleCount[edge.source][srcSide] || 0) + 1;
+          const sourceHandle = `${srcSide}-${
+            handleCount[edge.source][srcSide]
+          }`;
+
+          // Target
+          const tgtSide = edge.targetHandle || "top";
+          handleCount[edge.target] = handleCount[edge.target] || {};
+          handleCount[edge.target][tgtSide] =
+            (handleCount[edge.target][tgtSide] || 0) + 1;
+          const targetHandle = `${tgtSide}-${
+            handleCount[edge.target][tgtSide]
+          }`;
+
+          return {
+            ...edge,
+            sourceHandle,
+            targetHandle,
+          };
+        });
+      }
+
+      const updatedEdges = assignUniqueHandlesBySide(edgesWithDirections);
+
+      const nodeHandlesMap: Record<string, Set<string>> = {};
+      updatedEdges.forEach((edge) => {
+        if (!nodeHandlesMap[edge.source])
+          nodeHandlesMap[edge.source] = new Set();
+        if (!nodeHandlesMap[edge.target])
+          nodeHandlesMap[edge.target] = new Set();
+        nodeHandlesMap[edge.source].add(edge.sourceHandle);
+        nodeHandlesMap[edge.target].add(edge.targetHandle);
+      });
+
+      const nodesWithHandles = layoutedNodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          usedHandles: nodeHandlesMap[node.id]
+            ? Array.from(nodeHandlesMap[node.id])
+            : [],
+        },
+      }));
+
+      setNodes(nodesWithHandles);
+      setEdges(updatedEdges);
+
       setTimeout(() => {
         const instance = reactFlowInstanceRef.current;
         if (instance) {
           instance.fitView({ padding: 0.1 });
           const bounds = instance.getViewport();
-          // Reset Y to top
-          instance.setViewport({ x: bounds.x, y: 0, zoom: bounds.zoom }, { duration: 500 });
+          instance.setViewport(
+            { x: bounds.x, y: 0, zoom: bounds.zoom },
+            { duration: 500 }
+          );
         }
       }, 300);
     }
@@ -124,13 +246,49 @@ const ReactFlowChart = ({
     onNodeSelect(node);
   };
 
-  const nodesWithHoverDetails = nodes.map((node) => ({
-    ...node,
-    data: {
-      ...node.data,
-      ...(hoverDetails[node.id] ? hoverDetails[node.id] : {}),
-    },
-  }));
+  useEffect(() => {
+    if (
+      selectedAnalysis !== "analysis_detail" &&
+      selectedAnalysis !== "" &&
+      selectedAnalysis !== null
+    ) {
+      lastNonDetailAnalysis.current = selectedAnalysis;
+    }
+  }, [selectedAnalysis]);
+
+  const colorKey =
+    selectedAnalysis === "analysis_detail" && lastNonDetailAnalysis.current
+      ? lastNonDetailAnalysis.current
+      : selectedAnalysis;
+
+  const nodesWithHoverDetails = nodes.map((node) => {
+    let color = "#fff"; // default white
+    let utilization = null;
+    if (
+      (colorKey === "capacity_utilization_resource" ||
+        colorKey === "capacity_utilization_role" ||
+        colorKey === "capacity_utilization_activity") &&
+      activityUtilization &&
+      node.data?.label
+    ) {
+      const util = activityUtilization[node.data.label];
+      if (typeof util === "number") {
+        utilization = util;
+        color = utilizationToColor(util);
+      }
+    } else {
+      color = colorMappings[colorKey]?.[node.data.label] || "#3498db";
+    }
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        ...(hoverDetails[node.id] ? hoverDetails[node.id] : {}),
+        color,
+        utilization, // Pass utilization to node
+      },
+    };
+  });
 
   return (
     <div style={{ width: "100%", height: "70vh" }}>

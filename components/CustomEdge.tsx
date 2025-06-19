@@ -7,54 +7,105 @@ const CustomEdge = ({
   sourceY,
   targetX,
   targetY,
+  sourcePosition,
+  targetPosition,
   data,
 }: EdgeProps) => {
+  // Get the bezier path and control points
   const [edgePath] = getBezierPath({
     sourceX,
     sourceY,
+    sourcePosition,
     targetX,
     targetY,
+    targetPosition,
   });
+
+  // For straight lines, use the direct vector; for curves, use the tangent at t=1
+  let dx, dy;
+  if (sourceX === targetX || sourceY === targetY) {
+    // Straight line (vertical or horizontal)
+    dx = targetX - sourceX;
+    dy = targetY - sourceY;
+  } else {
+    // Bezier curve: use the last control point for tangent at t=1
+    const c2x = targetX;
+    const c2y = sourceY + (targetY - sourceY) * 0.5;
+    dx = targetX - c2x;
+    dy = targetY - c2y;
+  }
+  const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+  // Arrowhead position: at the end of the edge
+  const arrowX = targetX;
+  const arrowY = targetY;
+
+  // Label offset logic
+  const labelOffset = 16;
+  const isLTR = targetX > sourceX;
+  const labelTextX =
+    (sourceX + targetX) / 2 + (isLTR ? labelOffset : -labelOffset);
+  const labelTextY = (sourceY + targetY) / 2;
 
   return (
     <>
-      {/* Define the arrow marker */}
-      <svg>
-        <defs>
-          <marker
-            id="arrowhead"
-            markerWidth="6" // Smaller width
-            markerHeight="4" // Smaller height
-            refX="6" // Adjust reference point for smaller size
-            refY="2"
-            orient="auto"
-          >
-            <polygon points="0 0, 6 2, 0 4" fill="#000" />
-          </marker>
-        </defs>
-      </svg>
-
-      {/* Draw the edge path with the arrow marker */}
+      {/* Draw the edge path */}
       <path
         id={id}
         className="react-flow__edge-path"
         d={edgePath}
-        markerEnd="url(#arrowhead)" // Attach the arrow marker
-        style={{ stroke: "#000", strokeWidth: 2 }}
+        style={{ stroke: "#000", strokeWidth: 2, fill: "none" }}
       />
+
+      {/* Draw the improved open arrowhead */}
+      <g transform={`translate(${arrowX},${arrowY}) rotate(${angle})`}>
+        <polyline
+          points={`-12,6 0,0 -12,-6`}
+          fill="none"
+          stroke="#000"
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+      </g>
 
       {/* Render the edge label */}
       {data?.label && (
-        <text>
-          <textPath
-            href={`#${id}`}
-            style={{ fontSize: 12 }}
-            startOffset="50%"
+        <g>
+          <text
+            x={labelTextX}
+            y={labelTextY}
+            style={{
+              fontSize: 12,
+              userSelect: "none",
+              pointerEvents: "none",
+              fill: "#000",
+              fontWeight: 500,
+            }}
+            dominantBaseline="middle"
             textAnchor="middle"
+            stroke="#fff"
+            strokeWidth={4}
+            paintOrder="stroke"
           >
             {data.label}
-          </textPath>
-        </text>
+          </text>
+          <text
+            x={labelTextX}
+            y={labelTextY}
+            style={{
+              fontSize: 12,
+              userSelect: "none",
+              pointerEvents: "none",
+              fill: "#000",
+              fontWeight: 500,
+            }}
+            dominantBaseline="middle"
+            textAnchor="middle"
+            pointerEvents="none"
+          >
+            {data.label}
+          </text>
+        </g>
       )}
     </>
   );

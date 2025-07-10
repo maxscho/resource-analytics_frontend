@@ -35,6 +35,7 @@ export default function Home() {
   const [nodeSelectData, setNodeSelectData] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [initialPanelId, setInitialPanelId] = useState<string | null>(null);
   const [showUploadMenue, setShowUploadMenue] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // Track if this is the first load
 
   const [runOnboardingTutorial, setRunOnboardingTutorial] = useState(false);
   const [eventlogUploaded, setEventlogUploaded] = useState(false);
@@ -145,6 +146,7 @@ export default function Home() {
       const data = await response.json();
 
       setEventlogUploaded(true);
+      setIsInitialLoad(false); // Mark that initial load is complete
       setMetaData(data.table);
       setDropdownOptions({
         metrics: [],
@@ -235,6 +237,7 @@ export default function Home() {
                 onClick={() => {
                   setShowUploadMenue(true);
                   setEventlogUploaded(false);
+                  setIsInitialLoad(false); // This is not the initial load anymore
                 }}
                 className="btn btn-primary btn-sm"
               >
@@ -269,7 +272,7 @@ export default function Home() {
               {metaData.length > 0 && !showUploadMenue ? (
                 <DataTable data={metaData} />
               ) : (
-                <FileUpload onUpload={handleUpload} />
+                <FileUpload onUpload={handleUpload} shouldAutoLoad={isInitialLoad} />
               )}
               {flowNodes.length > 0 && initialPanelId && (
                 <div id="interactiveGraph">

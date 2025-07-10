@@ -1,14 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import styles from "../styles/components/FileUpload.module.css";
 
 interface FileUploadProps {
   onUpload: (file: File) => void;
+  shouldAutoLoad?: boolean; // Add optional prop to control auto-loading
 }
 
-export default function FileUpload({ onUpload }: FileUploadProps) {
+export default function FileUpload({
+  onUpload,
+  shouldAutoLoad = true,
+}: FileUploadProps) {
   const [file, setFile] = useState<File | null>(null);
+  const hasAutoLoadedRef = useRef(false);
+
+  useEffect(() => {
+    const loadSampleFile = async () => {
+      try {
+        const response = await fetch("/data/PurchasingExamplePseudo.csv");
+        const csvText = await response.text();
+
+        const sampleFile = new File([csvText], "PurchasingExamplePseudo.csv", {
+          type: "text/csv",
+        });
+
+        setFile(sampleFile);
+        hasAutoLoadedRef.current = true;
+
+        onUpload(sampleFile);
+      } catch (error) {
+        console.error("Error loading sample file:", error);
+      }
+    };
+
+    if (!hasAutoLoadedRef.current && shouldAutoLoad) {
+      loadSampleFile();
+    }
+  }, []);
 
   const handleUpload = () => {
     if (file) {
